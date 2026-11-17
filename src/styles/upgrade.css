@@ -1,0 +1,253 @@
+/* 👑 UPGRADE MODAL STYLES */
+
+.upgrade-modal {
+  max-width: 800px;
+}
+
+.upgrade-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.upgrade-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* PRO FEATURES */
+.pro-features-list {
+  margin-bottom: 2rem;
+}
+
+.pro-features-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.pro-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+.pro-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #F0FDF4;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  color: #065F46;
+}
+
+.pro-feature-check {
+  width: 24px;
+  height: 24px;
+  background: #22C55E;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* PLANS */
+.upgrade-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.upgrade-plan {
+  position: relative;
+  padding: 2rem;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 1rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.upgrade-plan:hover {
+  border-color: #22C55E;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  transform: translateY(-4px);
+}
+
+.upgrade-plan-featured {
+  background: linear-gradient(135deg, #F0FDF4 0%, white 100%);
+  border-color: #22C55E;
+  border-width: 3px;
+}
+
+.upgrade-plan-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.upgrade-plan-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.upgrade-plan-header h4 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.upgrade-plan-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.price-currency {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.price-value {
+  font-family: 'Poppins', sans-serif;
+  font-size: 4rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+}
+
+.price-decimal {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.price-period {
+  font-size: 1.125rem;
+  color: #6B7280;
+}
+
+.upgrade-plan-desc {
+  color: #6B7280;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* FOOTER INFO */
+.upgrade-footer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: #F9FAFB;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.upgrade-guarantee {
+  flex: 1;
+  min-width: 200px;
+}
+
+.upgrade-guarantee strong {
+  display: block;
+  color: #065F46;
+  margin-bottom: 0.25rem;
+}
+
+.upgrade-guarantee p {
+  color: #6B7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.upgrade-restore-btn {
+  background: none;
+  border: 2px solid #E5E7EB;
+  color: #6B7280;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.upgrade-restore-btn:hover {
+  border-color: #22C55E;
+  color: #22C55E;
+}
+
+/* LEGAL */
+.upgrade-legal {
+  padding: 1rem;
+  background: #F9FAFB;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  color: #9CA3AF;
+  line-height: 1.6;
+}
+
+.upgrade-legal p {
+  margin: 0;
+}
+
+/* SPINNER ANIMATION */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .upgrade-plans {
+    grid-template-columns: 1fr;
+  }
+
+  .pro-features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .upgrade-footer-info {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .upgrade-restore-btn {
+    width: 100%;
+  }
+}

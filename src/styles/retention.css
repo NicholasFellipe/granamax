@@ -1,0 +1,499 @@
+/* 🎯 RETENTION FEATURES STYLES */
+
+/* ALERTS PANEL */
+.alerts-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.alert-card {
+  border-left: 4px solid;
+  animation: slideIn 0.3s ease;
+}
+
+.alert-card-danger {
+  border-left-color: #EF4444;
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.05) 0%, white 100%);
+}
+
+.alert-card-warning {
+  border-left-color: #F59E0B;
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.05) 0%, white 100%);
+}
+
+.alert-card-info {
+  border-left-color: #22C55E;
+  background: linear-gradient(to right, rgba(34, 197, 94, 0.05) 0%, white 100%);
+}
+
+.alert-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.alert-icon-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.alert-emoji {
+  font-size: 2rem;
+  display: block;
+}
+
+.alert-icon {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid white;
+}
+
+.alert-icon-danger {
+  color: #EF4444;
+}
+
+.alert-icon-warning {
+  color: #F59E0B;
+}
+
+.alert-icon-info {
+  color: #22C55E;
+}
+
+.alert-text {
+  flex: 1;
+}
+
+.alert-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.alert-message {
+  font-size: 0.95rem;
+  color: #6B7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.alert-dismiss {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.alert-dismiss:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+/* DAILY BUDGET CARD */
+.daily-budget-card {
+  background: linear-gradient(135deg, #F0FDF4 0%, white 100%);
+  border: 2px solid #22C55E;
+}
+
+.budget-display {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.budget-icon-wrapper {
+  flex-shrink: 0;
+}
+
+.budget-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.budget-icon-success {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  color: white;
+}
+
+.budget-icon-danger {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+}
+
+.budget-values {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.budget-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.budget-label {
+  font-size: 0.875rem;
+  color: #6B7280;
+}
+
+.budget-amount {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #22C55E;
+}
+
+.budget-secondary {
+  display: flex;
+  gap: 2rem;
+}
+
+.budget-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.budget-stat-label {
+  font-size: 0.875rem;
+  color: #6B7280;
+}
+
+.budget-stat-value {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.budget-progress-wrapper {
+  margin-bottom: 1rem;
+}
+
+.budget-progress-bar {
+  height: 12px;
+  background: #F3F4F6;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.budget-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.budget-progress-success {
+  background: linear-gradient(90deg, #22C55E 0%, #16A34A 100%);
+}
+
+.budget-progress-warning {
+  background: linear-gradient(90deg, #F59E0B 0%, #D97706 100%);
+}
+
+.budget-progress-danger {
+  background: linear-gradient(90deg, #EF4444 0%, #DC2626 100%);
+}
+
+.budget-message {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.budget-message-success {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.budget-message-warning {
+  background: #FEF3C7;
+  color: #78350F;
+}
+
+.budget-message-danger {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.budget-message-info {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+/* ACHIEVEMENTS */
+.achievements-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  border: 2px solid;
+}
+
+.achievement-unlocked {
+  background: linear-gradient(135deg, #F0FDF4 0%, white 100%);
+  border-color: #22C55E;
+}
+
+.achievement-locked {
+  background: #F9FAFB;
+  border-color: #E5E7EB;
+  opacity: 0.7;
+}
+
+.achievement-icon-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.achievement-emoji {
+  font-size: 2.5rem;
+  display: block;
+  filter: grayscale(0);
+}
+
+.achievement-locked .achievement-emoji {
+  filter: grayscale(1);
+}
+
+.achievement-lock {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  background: #9CA3AF;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+.achievement-content {
+  flex: 1;
+}
+
+.achievement-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.achievement-description {
+  font-size: 0.875rem;
+  color: #6B7280;
+  margin: 0 0 0.5rem 0;
+}
+
+.achievement-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.achievement-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.achievement-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22C55E 0%, #16A34A 100%);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.achievement-progress-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.achievement-badge {
+  flex-shrink: 0;
+}
+
+.achievements-complete {
+  text-align: center;
+  padding: 2rem;
+  margin-top: 1rem;
+  background: linear-gradient(135deg, #FEF3C7 0%, white 100%);
+  border-radius: 0.75rem;
+  border: 2px dashed #F59E0B;
+}
+
+.achievements-complete h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.achievements-complete p {
+  color: #6B7280;
+  margin: 0;
+}
+
+/* INSIGHTS */
+.insights-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.insight-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #F9FAFB;
+  border-radius: 0.75rem;
+}
+
+.insight-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.insight-icon-primary {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+.insight-icon-success {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.insight-icon-danger {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.insight-icon-warning {
+  background: #FEF3C7;
+  color: #78350F;
+}
+
+.insight-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.insight-label {
+  font-size: 0.875rem;
+  color: #6B7280;
+}
+
+.insight-value {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.insight-note {
+  font-size: 0.875rem;
+  color: #9CA3AF;
+}
+
+.insight-tip {
+  padding: 1rem;
+  background: linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 100%);
+  border-radius: 0.75rem;
+  border: 2px dashed #3B82F6;
+}
+
+.insight-tip strong {
+  display: block;
+  color: #1E40AF;
+  margin-bottom: 0.5rem;
+}
+
+.insight-tip p {
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ANIMATIONS */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .budget-display {
+    flex-direction: column;
+  }
+
+  .budget-secondary {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .achievement-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .achievement-progress {
+    width: 100%;
+  }
+}

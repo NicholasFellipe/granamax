@@ -1,0 +1,468 @@
+/* 🎨 LANDING PAGE STYLES - BRANDING GRANAMAX */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+.landing-page {
+  font-family: 'Inter', sans-serif;
+  color: #111827;
+  background: #ffffff;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* 🎯 HERO SECTION */
+.hero-section {
+  background: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+  color: white;
+  padding: 6rem 0 8rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(34, 197, 94, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.hero-title .text-danger {
+  color: #EF4444;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  color: #D1D5DB;
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.5;
+}
+
+.hero-note {
+  margin-top: 1rem;
+  color: #9CA3AF;
+  font-size: 0.95rem;
+}
+
+/* 💥 PAIN SECTION */
+.pain-section {
+  padding: 5rem 0;
+  background: #F9FAFB;
+}
+
+.section-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3rem;
+  color: #111827;
+}
+
+.section-title .text-primary {
+  color: #22C55E;
+}
+
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.pain-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  text-align: center;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.pain-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.pain-card p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+/* 🚀 SOLUTION SECTION */
+.solution-section {
+  padding: 5rem 0;
+  background: white;
+}
+
+.solution-badge {
+  display: inline-block;
+  background: #22C55E;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  margin: 0 auto 2rem;
+  display: block;
+  width: fit-content;
+}
+
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.solution-card {
+  text-align: center;
+  padding: 2rem;
+}
+
+.solution-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  color: white;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.solution-card h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #111827;
+}
+
+.solution-card p {
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+/* 📊 BENEFITS SECTION */
+.benefits-section {
+  padding: 5rem 0;
+  background: #F9FAFB;
+}
+
+.benefits-list {
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.benefit-item {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.benefit-check {
+  color: #22C55E;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.benefit-item h4 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.benefit-item p {
+  color: #6B7280;
+  line-height: 1.6;
+}
+
+/* 🔒 PRO SECTION */
+.pro-section {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+}
+
+.pro-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  padding: 3rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
+}
+
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.pro-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.pro-description {
+  font-size: 1.1rem;
+  color: #6B7280;
+  margin-bottom: 2rem;
+}
+
+.pro-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.pro-feature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #F9FAFB;
+  border-radius: 0.5rem;
+  text-align: left;
+  font-weight: 500;
+}
+
+.pro-feature-icon {
+  color: #22C55E;
+  flex-shrink: 0;
+}
+
+.pro-pricing {
+  margin: 2rem 0;
+}
+
+.pro-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.price-currency {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.price-value {
+  font-family: 'Poppins', sans-serif;
+  font-size: 4rem;
+  font-weight: 800;
+  color: #22C55E;
+}
+
+.price-period {
+  font-size: 1.25rem;
+  color: #6B7280;
+}
+
+.price-note {
+  color: #9CA3AF;
+  font-size: 0.95rem;
+}
+
+/* 🟢 CTA SECTION */
+.cta-section {
+  padding: 6rem 0;
+  background: white;
+  text-align: center;
+}
+
+.cta-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.cta-subtitle {
+  font-size: 1.25rem;
+  color: #6B7280;
+  margin-bottom: 2.5rem;
+}
+
+.cta-note {
+  margin-top: 1rem;
+  color: #9CA3AF;
+  font-size: 0.95rem;
+}
+
+/* BUTTONS */
+.btn-primary {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
+}
+
+.btn-primary.btn-large {
+  padding: 1.25rem 3rem;
+  font-size: 1.25rem;
+}
+
+.btn-pro {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.btn-pro:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
+}
+
+.btn-secondary {
+  background: #E5E7EB;
+  color: #374151;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+/* FOOTER */
+.landing-footer {
+  background: #111827;
+  color: #9CA3AF;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.footer-text {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.modal-content h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .cta-title {
+    font-size: 2.25rem;
+  }
+
+  .pain-grid,
+  .solution-grid {
+    grid-template-columns: 1fr;
+  }
+}

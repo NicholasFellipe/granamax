@@ -1,0 +1,88 @@
+/* 🎨 GRANAMAX - GLOBAL STYLES */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import './styles/landing.css';
+@import './styles/components.css';
+@import './styles/auth.css';
+@import './styles/dashboard.css';
+@import './styles/investments.css';
+@import './styles/retention.css';
+@import './styles/upgrade.css';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Colors */
+  --color-primary: #22C55E;
+  --color-primary-dark: #16A34A;
+  --color-primary-light: #4ADE80;
+  --color-dark: #111827;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  
+  /* Fonts */
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  /* Rendering */
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #F9FAFB;
+  color: #111827;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Utility Classes */
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3F4F6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
