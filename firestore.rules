@@ -1,0 +1,254 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global hardened primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Validation Blueprint: UserProfile
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'isPro', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'birthDate', 'isPro', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid == request.auth.uid
+        && data.uid.size() >= 1
+        && data.uid.size() <= 128
+        && data.email is string
+        && data.email.size() <= 254
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 120))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512))
+        && (!('birthDate' in data) || data.birthDate == null || (data.birthDate is string && data.birthDate.size() <= 20))
+        && data.isPro is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: Transaction
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'description', 'amount', 'type', 'category', 'date', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'description', 'amount', 'type', 'category', 'date', 'createdAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.description is string
+        && data.description.size() >= 1
+        && data.description.size() <= 120
+        && (data.amount is int || data.amount is float)
+        && data.amount > 0
+        && data.amount <= 1000000000
+        && data.type is string
+        && data.type in ['income', 'expense']
+        && data.category is string
+        && data.category.size() >= 1
+        && data.category.size() <= 40
+        && data.date is timestamp
+        && data.createdAt is timestamp;
+    }
+
+    // Validation Blueprint: Investment
+    function isValidInvestment(data) {
+      return data.keys().hasAll(['userId', 'name', 'amount', 'currentValue', 'type', 'boughtAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'name', 'amount', 'currentValue', 'type', 'boughtAt', 'updatedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 100
+        && (data.amount is int || data.amount is float)
+        && data.amount > 0
+        && data.amount <= 1000000000
+        && (data.currentValue is int || data.currentValue is float)
+        && data.currentValue >= 0
+        && data.currentValue <= 1000000000
+        && data.type is string
+        && data.type in ['stocks', 'crypto', 'funds', 'savings']
+        && data.boughtAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: MonthlyBudget
+    function isValidMonthlyBudget(data) {
+      return data.keys().hasAll(['userId', 'month', 'limit', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'month', 'limit', 'createdAt', 'updatedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.month is string
+        && data.month.size() == 7
+        && data.month.matches('^\\d{4}-\\d{2}$')
+        && (data.limit is int || data.limit is float)
+        && data.limit > 0
+        && data.limit <= 1000000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: RecurringTransaction
+    function isValidRecurringTransaction(data) {
+      return data.keys().hasAll(['userId', 'description', 'amount', 'type', 'category', 'dayOfMonth', 'active', 'lastGeneratedMonth', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'description', 'amount', 'type', 'category', 'dayOfMonth', 'active', 'lastGeneratedMonth', 'createdAt', 'updatedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.description is string
+        && data.description.size() >= 1
+        && data.description.size() <= 120
+        && (data.amount is int || data.amount is float)
+        && data.amount > 0
+        && data.amount <= 1000000000
+        && data.type is string
+        && data.type in ['income', 'expense']
+        && data.category is string
+        && data.category.size() >= 1
+        && data.category.size() <= 40
+        && data.dayOfMonth is int
+        && data.dayOfMonth >= 1
+        && data.dayOfMonth <= 31
+        && data.active is bool
+        && data.lastGeneratedMonth is string
+        && (data.lastGeneratedMonth == '' || (data.lastGeneratedMonth.size() == 7 && data.lastGeneratedMonth.matches('^\\d{4}-\\d{2}$')))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Users collection (PII isolated to owner only, no list)
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if false;
+      allow create: if isVerified()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming())
+        && incoming().isPro == false
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().isPro == existing().isPro
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'birthDate', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Transactions collection
+    match /transactions/{transactionId} {
+      allow get: if isSignedIn() && isValidId(transactionId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+        && isValidId(transactionId)
+        && isValidTransaction(incoming())
+        && incoming().date == request.time
+        && incoming().createdAt == request.time;
+      allow update: if isVerified()
+        && isValidId(transactionId)
+        && existing().userId == request.auth.uid
+        && isValidTransaction(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['description', 'amount', 'type', 'category', 'date']);
+      allow delete: if isVerified()
+        && isValidId(transactionId)
+        && existing().userId == request.auth.uid;
+    }
+
+    // Investments collection
+    match /investments/{investmentId} {
+      allow get: if isSignedIn() && isValidId(investmentId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+        && isValidId(investmentId)
+        && isValidInvestment(incoming())
+        && incoming().boughtAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(investmentId)
+        && existing().userId == request.auth.uid
+        && isValidInvestment(incoming())
+        && incoming().userId == existing().userId
+        && incoming().boughtAt == existing().boughtAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['currentValue', 'updatedAt']);
+      allow delete: if isVerified()
+        && isValidId(investmentId)
+        && existing().userId == request.auth.uid;
+    }
+
+    // Monthly Budgets collection
+    match /monthlyBudgets/{budgetId} {
+      allow get: if isSignedIn() && isValidId(budgetId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+        && isValidId(budgetId)
+        && budgetId == request.auth.uid + '_' + incoming().month
+        && isValidMonthlyBudget(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(budgetId)
+        && existing().userId == request.auth.uid
+        && isValidMonthlyBudget(incoming())
+        && incoming().userId == existing().userId
+        && incoming().month == existing().month
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['limit', 'updatedAt']);
+      allow delete: if isVerified()
+        && isValidId(budgetId)
+        && existing().userId == request.auth.uid;
+    }
+
+    // Recurring Transactions collection
+    match /recurringTransactions/{recurringId} {
+      allow get: if isSignedIn() && isValidId(recurringId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+        && isValidId(recurringId)
+        && isValidRecurringTransaction(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(recurringId)
+        && existing().userId == request.auth.uid
+        && isValidRecurringTransaction(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['description', 'amount', 'type', 'category', 'dayOfMonth', 'active', 'lastGeneratedMonth', 'updatedAt']);
+      allow delete: if isVerified()
+        && isValidId(recurringId)
+        && existing().userId == request.auth.uid;
+    }
+  }
+}

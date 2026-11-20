@@ -1,0 +1,6 @@
+{
+  "name": "GranaMax",
+  "description": "O app que faz você sobrar dinheiro e investir todo mês. Controle financeiro pessoal, orçamentos, recorrências e lançamento por voz.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

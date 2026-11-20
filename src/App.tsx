@@ -3,10 +3,11 @@ import { LandingPage } from './components/LandingPage';
 import { AuthForms } from './components/AuthForms';
 import { Dashboard } from './components/Dashboard';
 import { UpgradeModal } from './components/UpgradeModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import useAuth from './hooks/useAuth';
 
 function App() {
-  const { user, loading, signIn, signUp, signOut } = useAuth();
+  const { user, loading, signIn, signUp, signInWithGoogle, signOut } = useAuth();
   const [showLanding, setShowLanding] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -18,20 +19,29 @@ function App() {
     );
   }
 
-  if (!user) {
-    if (showLanding) return <LandingPage onGetStarted={() => setShowLanding(false)} />;
-    return <AuthForms onSignIn={signIn} onSignUp={signUp} />;
-  }
-
   return (
-    <>
-      <Dashboard
-        user={user}
-        onSignOut={signOut}
-        onUpgradeToPro={() => setShowUpgradeModal(true)}
-      />
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
-    </>
+    <ErrorBoundary>
+      {!user ? (
+        showLanding ? (
+          <LandingPage onGetStarted={() => setShowLanding(false)} />
+        ) : (
+          <AuthForms
+            onSignIn={signIn}
+            onSignUp={signUp}
+            onGoogleSignIn={signInWithGoogle}
+          />
+        )
+      ) : (
+        <>
+          <Dashboard
+            user={user}
+            onSignOut={signOut}
+            onUpgradeToPro={() => setShowUpgradeModal(true)}
+          />
+          {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
+        </>
+      )}
+    </ErrorBoundary>
   );
 }
 

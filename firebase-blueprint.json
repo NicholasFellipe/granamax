@@ -1,0 +1,272 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil privado do usuário autenticado do GranaMax",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "ID único do Firebase Auth",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email do usuário",
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Nome de exibição da conta Google",
+          "maxLength": 120
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "URL da foto de perfil do Google",
+          "maxLength": 512
+        },
+        "birthDate": {
+          "type": "string",
+          "description": "Data de nascimento opcional (YYYY-MM-DD)",
+          "maxLength": 20
+        },
+        "isPro": {
+          "type": "boolean",
+          "description": "Status de assinatura GranaMax PRO"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de criação do perfil"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data da última atualização do perfil"
+        }
+      },
+      "required": ["uid", "email", "isPro", "createdAt", "updatedAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Receita ou despesa registrada pelo usuário",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID do proprietário da transação",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Descrição da transação",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "amount": {
+          "type": "number",
+          "description": "Valor positivo em reais"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "Tipo da transação"
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoria da transação",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data da transação"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de criação no servidor"
+        }
+      },
+      "required": ["userId", "description", "amount", "type", "category", "date", "createdAt"]
+    },
+    "Investment": {
+      "title": "Investment",
+      "description": "Ativo de investimento do usuário PRO",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID do proprietário do investimento",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nome do ativo",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "amount": {
+          "type": "number",
+          "description": "Valor investido inicial"
+        },
+        "currentValue": {
+          "type": "number",
+          "description": "Valor atual do ativo"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["stocks", "crypto", "funds", "savings"],
+          "description": "Categoria do investimento"
+        },
+        "boughtAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data da compra"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data da última atualização"
+        }
+      },
+      "required": ["userId", "name", "amount", "currentValue", "type", "boughtAt", "updatedAt"]
+    },
+    "MonthlyBudget": {
+      "title": "MonthlyBudget",
+      "description": "Meta de orçamento mensal de gastos definida pelo usuário",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID do proprietário do orçamento",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "month": {
+          "type": "string",
+          "description": "Mês de referência no formato YYYY-MM",
+          "minLength": 7,
+          "maxLength": 7,
+          "pattern": "^\\d{4}-\\d{2}$"
+        },
+        "limit": {
+          "type": "number",
+          "description": "Valor máximo de gastos definido para o mês"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de criação no servidor"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data da última atualização no servidor"
+        }
+      },
+      "required": ["userId", "month", "limit", "createdAt", "updatedAt"]
+    },
+    "RecurringTransaction": {
+      "title": "RecurringTransaction",
+      "description": "Conta fixa ou receita recorrente mensal do usuário",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID do proprietário da recorrência",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Descrição da conta ou receita recorrente",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "amount": {
+          "type": "number",
+          "description": "Valor mensal positivo em reais"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["income", "expense"],
+          "description": "Tipo da recorrência"
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoria associada",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "dayOfMonth": {
+          "type": "integer",
+          "description": "Dia do mês previsto (1 a 31)"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indica se a recorrência está ativa"
+        },
+        "lastGeneratedMonth": {
+          "type": "string",
+          "description": "Último mês (YYYY-MM) em que foi lançada automaticamente, ou vazio",
+          "maxLength": 7
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de criação no servidor"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de atualização no servidor"
+        }
+      },
+      "required": [
+        "userId",
+        "description",
+        "amount",
+        "type",
+        "category",
+        "dayOfMonth",
+        "active",
+        "lastGeneratedMonth",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Perfil privado do usuário contendo email e status PRO"
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Transações financeiras pertencentes ao usuário"
+    },
+    "/investments/{investmentId}": {
+      "schema": { "$ref": "#/entities/Investment" },
+      "description": "Investimentos registrados pelo usuário"
+    },
+    "/monthlyBudgets/{budgetId}": {
+      "schema": { "$ref": "#/entities/MonthlyBudget" },
+      "description": "Metas mensais de gastos por usuário e mês"
+    },
+    "/recurringTransactions/{recurringId}": {
+      "schema": { "$ref": "#/entities/RecurringTransaction" },
+      "description": "Contas fixas e receitas recorrentes mensais por usuário"
+    }
+  }
+}

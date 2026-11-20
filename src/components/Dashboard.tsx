@@ -2,22 +2,27 @@
 
 import { useState, useMemo } from 'react';
 import { 
-  Wallet, TrendingUp, TrendingDown, Plus, LogOut, Crown, PieChart, Briefcase, Filter
+  Wallet, TrendingUp, TrendingDown, Plus, LogOut, Crown, PieChart, Briefcase, Filter, Repeat, CheckCircle2, X, Mic
 } from 'lucide-react';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { TransactionList } from './TransactionList';
 import { AddTransactionModal } from './AddTransactionModal';
+import { VoiceTransactionModal } from './VoiceTransactionModal';
 import { ExpenseChart } from './ExpenseChart';
 import { CategoryBreakdown } from './CategoryBreakdown';
 import { InvestmentsPanel } from './InvestmentsPanel';
+import { RecurringTransactionsPanel } from './RecurringTransactionsPanel';
 import { AlertsPanel } from './AlertsPanel';
 import { DailyBudgetCard } from './DailyBudgetCard';
+import { MonthlyBudgetCard } from './MonthlyBudgetCard';
 import { AchievementsPanel } from './AchievementsPanel';
 import { InsightsCard } from './InsightsCard';
 import { useRetention } from '../hooks/useRetention';
 import useTransactions from '../hooks/useTransactions';
+import useMonthlyBudget from '../hooks/useMonthlyBudget';
+import useRecurringTransactions from '../hooks/useRecurringTransactions';
 import type { User } from '../types';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,7 +37,10 @@ interface DashboardProps {
 
 export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'analytics' | 'investments'>('overview');
+  const [showVoiceTransaction, setShowVoiceTransaction] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'transactions' | 'recurring' | 'analytics' | 'investments'
+  >('overview');
 
   // Filtros
   const now = new Date();
@@ -40,8 +48,30 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
 
-  const { transactions, loading: txLoading, addTransaction, deleteTransaction } = useTransactions(user.uid);
+  const {
+    transactions,
+    loading: txLoading,
+    addTransaction,
+    updateTransactionCategory,
+    deleteTransaction,
+  } = useTransactions(user.uid);
   const { insights, alerts, dailyBudget, achievements } = useRetention(user.uid);
+  const {
+    loading: monthlyBudgetLoading,
+    getBudgetForMonth,
+    setMonthlyBudget,
+    deleteMonthlyBudget,
+  } = useMonthlyBudget(user.uid);
+  const {
+    recurringItems,
+    loading: recurringLoading,
+    autoPopulatedItems,
+    addRecurringTransaction,
+    triggerRecurringForMonth,
+    toggleRecurringActive,
+    deleteRecurringTransaction,
+    dismissAutoPopulatedBanner,
+  } = useRecurringTransactions(user.uid);
 
   // Gerar lista dos últimos 12 meses para o seletor
   const monthOptions = useMemo(() => {
@@ -54,19 +84,30 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
     });
   }, []);
 
-  // Transações filtradas
-  const filteredTransactions = useMemo(() => {
+  const availableCategories = useMemo(() => {
+    const base = CATEGORIES.filter(c => c !== 'Todas');
+    const custom = transactions.map(t => t.category).filter(Boolean);
+    return Array.from(new Set([...base, ...custom]));
+  }, [transactions]);
+
+  const monthTransactions = useMemo(() => {
     const [year, month] = selectedMonth.split('-').map(Number);
     const start = startOfMonth(new Date(year, month - 1));
     const end = endOfMonth(new Date(year, month - 1));
 
     return transactions.filter(t => {
       const inMonth = t.date >= start && t.date <= end;
-      const inCategory = selectedCategory === 'Todas' || t.category === selectedCategory;
       const inType = selectedType === 'all' || t.type === selectedType;
-      return inMonth && inCategory && inType;
+      return inMonth && inType;
     });
-  }, [transactions, selectedMonth, selectedCategory, selectedType]);
+  }, [transactions, selectedMonth, selectedType]);
+
+  // Transações filtradas
+  const filteredTransactions = useMemo(() => {
+    return monthTransactions.filter(t => {
+      return selectedCategory === 'Todas' || t.category === selectedCategory;
+    });
+  }, [monthTransactions, selectedCategory]);
 
   // Totais baseados nas transações filtradas
   const balance = filteredTransactions.reduce((acc, t) =>
@@ -75,6 +116,26 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
   const totalExpenses = filteredTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
 
   const currentMonthLabel = monthOptions.find(m => m.value === selectedMonth)?.label || selectedMonth;
+
+  const monthlyExpenses = useMemo(() => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const start = startOfMonth(new Date(year, month - 1));
+    const end = endOfMonth(new Date(year, month - 1));
+    return transactions
+      .filter(t => t.type === 'expense' && t.date >= start && t.date <= end)
+      .reduce((acc, t) => acc + t.amount, 0);
+  }, [transactions, selectedMonth]);
+
+  const activeMonthlyBudget = getBudgetForMonth(selectedMonth);
+
+  const fullName = user.displayName?.trim() || user.email.split('@')[0];
+  const nameParts = fullName.split(/\s+/).filter(Boolean);
+  const initials =
+    nameParts.length >= 2
+      ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+      : fullName.slice(0, 2).toUpperCase();
+  const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
+  const showPhoto = Boolean(user.photoURL && failedPhotoUrl !== user.photoURL);
 
   return (
     <div className="dashboard">
@@ -87,6 +148,24 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
               <h1 className="brand-title">GranaMax</h1>
             </div>
             <div className="dashboard-user">
+              <div className="dashboard-profile" title={user.email}>
+                {showPhoto ? (
+                  <img
+                    src={user.photoURL}
+                    alt={fullName}
+                    className="dashboard-avatar"
+                    referrerPolicy="no-referrer"
+                    onError={() => setFailedPhotoUrl(user.photoURL || null)}
+                  />
+                ) : (
+                  <span className="dashboard-avatar-fallback" aria-hidden="true">
+                    {initials}
+                  </span>
+                )}
+                <div className="dashboard-profile-text">
+                  <span className="dashboard-profile-name">{fullName}</span>
+                </div>
+              </div>
               {user.isPro ? (
                 <Badge variant="pro" size="sm"><Crown size={14} />PRO</Badge>
               ) : (
@@ -112,6 +191,9 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
             <button className={`tab ${activeTab === 'transactions' ? 'tab-active' : ''}`} onClick={() => setActiveTab('transactions')}>
               Transações
             </button>
+            <button className={`tab ${activeTab === 'recurring' ? 'tab-active' : ''}`} onClick={() => setActiveTab('recurring')}>
+              <Repeat size={16} />Recorrentes
+            </button>
             <button className={`tab ${activeTab === 'analytics' ? 'tab-active' : ''}`} onClick={() => setActiveTab('analytics')}>
               <PieChart size={16} />Análise
               {!user.isPro && <Badge variant="pro" size="sm">PRO</Badge>}
@@ -127,6 +209,7 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
       </div>
 
       {/* FILTROS */}
+      {activeTab !== 'recurring' && activeTab !== 'investments' && (
       <div className="filters-bar">
         <div className="container">
           <div className="filters-row">
@@ -149,7 +232,8 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                 value={selectedCategory}
                 onChange={e => setSelectedCategory(e.target.value)}
               >
-                {CATEGORIES.map(c => (
+                <option value="Todas">Todas</option>
+                {availableCategories.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -178,13 +262,49 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
           </div>
         </div>
       </div>
+      )}
 
       <main className="dashboard-content">
         <div className="container">
+          {autoPopulatedItems.length > 0 && (
+            <div className="recurring-autopop-banner" role="status">
+              <div className="recurring-autopop-content">
+                <CheckCircle2 size={18} className="recurring-autopop-icon" />
+                <span>
+                  <strong>
+                    {autoPopulatedItems.length === 1
+                      ? '1 lançamento recorrente lançado automaticamente:'
+                      : `${autoPopulatedItems.length} lançamentos recorrentes lançados automaticamente:`}
+                  </strong>{' '}
+                  {autoPopulatedItems.join(', ')}.
+                </span>
+              </div>
+              <button
+                type="button"
+                className="recurring-autopop-close"
+                onClick={dismissAutoPopulatedBanner}
+                aria-label="Dispensar aviso"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
           {activeTab === 'overview' && (
             <>
               <AlertsPanel alerts={alerts} />
-              <DailyBudgetCard budget={dailyBudget} />
+              <div className="budgets-grid">
+                <DailyBudgetCard budget={dailyBudget} />
+                <MonthlyBudgetCard
+                  month={selectedMonth}
+                  monthLabel={currentMonthLabel}
+                  spent={monthlyExpenses}
+                  limit={activeMonthlyBudget ? activeMonthlyBudget.limit : null}
+                  loading={monthlyBudgetLoading}
+                  onSaveLimit={setMonthlyBudget}
+                  onRemoveLimit={deleteMonthlyBudget}
+                />
+              </div>
 
               <div className="stats-grid">
                 <Card className="stat-card-primary">
@@ -216,8 +336,32 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
               </Card>
 
               <Card>
-                <CardHeader title="Gastos por Categoria" subtitle="Onde seu dinheiro está indo" />
-                <CardContent><CategoryBreakdown transactions={filteredTransactions} /></CardContent>
+                <CardHeader
+                  title="Distribuição de Despesas por Categoria"
+                  subtitle="Proporção dos seus gastos em Moradia, Alimentação, Lazer e outras categorias"
+                  action={
+                    selectedCategory !== 'Todas' ? (
+                      <button
+                        type="button"
+                        className="filter-clear"
+                        onClick={() => setSelectedCategory('Todas')}
+                      >
+                        Filtro: {selectedCategory} ×
+                      </button>
+                    ) : undefined
+                  }
+                />
+                <CardContent>
+                  <CategoryBreakdown
+                    transactions={monthTransactions}
+                    loading={txLoading}
+                    activeCategory={selectedCategory}
+                    onSelectCategory={(cat) =>
+                      setSelectedCategory(prev => (prev === cat ? 'Todas' : cat))
+                    }
+                    onAddExpense={() => setShowAddTransaction(true)}
+                  />
+                </CardContent>
               </Card>
 
               <InsightsCard insights={insights} />
@@ -227,13 +371,25 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                 <CardHeader
                   title="Transações Recentes"
                   action={
-                    <Button variant="primary" size="sm" onClick={() => setShowAddTransaction(true)} icon={<Plus size={16} />}>
-                      Adicionar
-                    </Button>
+                    <div className="dashboard-card-actions">
+                      <Button variant="secondary" size="sm" onClick={() => setShowVoiceTransaction(true)} icon={<Mic size={16} />}>
+                        Por Voz
+                      </Button>
+                      <Button variant="primary" size="sm" onClick={() => setShowAddTransaction(true)} icon={<Plus size={16} />}>
+                        Adicionar
+                      </Button>
+                    </div>
                   }
                 />
                 <CardContent className="p-0">
-                  <TransactionList transactions={filteredTransactions} loading={txLoading} onDelete={deleteTransaction} limit={5} />
+                  <TransactionList
+                    transactions={filteredTransactions}
+                    loading={txLoading}
+                    onDelete={deleteTransaction}
+                    onUpdateCategory={updateTransactionCategory}
+                    availableCategories={availableCategories}
+                    limit={5}
+                  />
                 </CardContent>
               </Card>
             </>
@@ -244,15 +400,37 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
               <CardHeader
                 title={`Transações — ${currentMonthLabel}`}
                 action={
-                  <Button variant="primary" onClick={() => setShowAddTransaction(true)} icon={<Plus size={16} />}>
-                    Nova Transação
-                  </Button>
+                  <div className="dashboard-card-actions">
+                    <Button variant="secondary" onClick={() => setShowVoiceTransaction(true)} icon={<Mic size={16} />}>
+                      Adicionar por Voz
+                    </Button>
+                    <Button variant="primary" onClick={() => setShowAddTransaction(true)} icon={<Plus size={16} />}>
+                      Nova Transação
+                    </Button>
+                  </div>
                 }
               />
               <CardContent className="p-0">
-                <TransactionList transactions={filteredTransactions} loading={txLoading} onDelete={deleteTransaction} />
+                <TransactionList
+                  transactions={filteredTransactions}
+                  loading={txLoading}
+                  onDelete={deleteTransaction}
+                  onUpdateCategory={updateTransactionCategory}
+                  availableCategories={availableCategories}
+                />
               </CardContent>
             </Card>
+          )}
+
+          {activeTab === 'recurring' && (
+            <RecurringTransactionsPanel
+              items={recurringItems}
+              loading={recurringLoading}
+              onAdd={addRecurringTransaction}
+              onToggleActive={toggleRecurringActive}
+              onTriggerNow={triggerRecurringForMonth}
+              onDelete={deleteRecurringTransaction}
+            />
           )}
 
           {activeTab === 'analytics' && (
@@ -307,6 +485,14 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
 
       {showAddTransaction && (
         <AddTransactionModal onClose={() => setShowAddTransaction(false)} onAdd={addTransaction} />
+      )}
+
+      {showVoiceTransaction && (
+        <VoiceTransactionModal
+          onClose={() => setShowVoiceTransaction(false)}
+          onAdd={addTransaction}
+          onDelete={deleteTransaction}
+        />
       )}
     </div>
   );
