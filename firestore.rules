@@ -31,7 +31,18 @@ service cloud.firestore {
     // Validation Blueprint: UserProfile
     function isValidUserProfile(data) {
       return data.keys().hasAll(['uid', 'email', 'isPro', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'birthDate', 'isPro', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'uid',
+          'email',
+          'displayName',
+          'photoURL',
+          'birthDate',
+          'isPro',
+          'proPlan',
+          'proActivatedAt',
+          'createdAt',
+          'updatedAt'
+        ])
         && data.uid is string
         && data.uid == request.auth.uid
         && data.uid.size() >= 1
@@ -42,6 +53,8 @@ service cloud.firestore {
         && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512))
         && (!('birthDate' in data) || data.birthDate == null || (data.birthDate is string && data.birthDate.size() <= 20))
         && data.isPro is bool
+        && (!('proPlan' in data) || (data.proPlan is string && data.proPlan.size() <= 16 && data.proPlan in ['free', 'monthly', 'yearly']))
+        && (!('proActivatedAt' in data) || data.proActivatedAt == null || data.proActivatedAt is timestamp)
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -61,6 +74,7 @@ service cloud.firestore {
         && data.amount > 0
         && data.amount <= 1000000000
         && data.type is string
+        && data.type.size() <= 16
         && data.type in ['income', 'expense']
         && data.category is string
         && data.category.size() >= 1
@@ -72,7 +86,17 @@ service cloud.firestore {
     // Validation Blueprint: Investment
     function isValidInvestment(data) {
       return data.keys().hasAll(['userId', 'name', 'amount', 'currentValue', 'type', 'boughtAt', 'updatedAt'])
-        && data.keys().hasOnly(['userId', 'name', 'amount', 'currentValue', 'type', 'boughtAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'userId',
+          'name',
+          'amount',
+          'currentValue',
+          'type',
+          'institution',
+          'notes',
+          'boughtAt',
+          'updatedAt'
+        ])
         && data.userId is string
         && data.userId == request.auth.uid
         && data.userId.size() >= 1
@@ -87,7 +111,10 @@ service cloud.firestore {
         && data.currentValue >= 0
         && data.currentValue <= 1000000000
         && data.type is string
-        && data.type in ['stocks', 'crypto', 'funds', 'savings']
+        && data.type.size() <= 20
+        && data.type in ['stocks', 'reits', 'fixed_income', 'funds', 'crypto', 'savings']
+        && (!('institution' in data) || (data.institution is string && data.institution.size() <= 80))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 240))
         && data.boughtAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -125,6 +152,7 @@ service cloud.firestore {
         && data.amount > 0
         && data.amount <= 1000000000
         && data.type is string
+        && data.type.size() <= 16
         && data.type in ['income', 'expense']
         && data.category is string
         && data.category.size() >= 1
@@ -139,6 +167,81 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // Validation Blueprint: WealthSnapshot
+    function isValidWealthSnapshot(data) {
+      return data.keys().hasAll(['userId', 'month', 'cashBalance', 'investmentsValue', 'netWorth', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'month', 'cashBalance', 'investmentsValue', 'netWorth', 'createdAt', 'updatedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.month is string
+        && data.month.size() == 7
+        && data.month.matches('^\\d{4}-\\d{2}$')
+        && (data.cashBalance is int || data.cashBalance is float)
+        && data.cashBalance >= -1000000000
+        && data.cashBalance <= 1000000000
+        && (data.investmentsValue is int || data.investmentsValue is float)
+        && data.investmentsValue >= 0
+        && data.investmentsValue <= 1000000000
+        && (data.netWorth is int || data.netWorth is float)
+        && data.netWorth >= -1000000000
+        && data.netWorth <= 2000000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: CustomAlert
+    function isValidCustomAlert(data) {
+      return data.keys().hasAll(['userId', 'name', 'metric', 'category', 'threshold', 'active', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'name', 'metric', 'category', 'threshold', 'active', 'createdAt', 'updatedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 80
+        && data.metric is string
+        && data.metric.size() <= 30
+        && data.metric in ['category_monthly', 'min_balance', 'single_expense', 'portfolio_goal']
+        && data.category is string
+        && data.category.size() <= 40
+        && (data.threshold is int || data.threshold is float)
+        && data.threshold > 0
+        && data.threshold <= 1000000000
+        && data.active is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: SupportTicket
+    function isValidSupportTicket(data) {
+      return data.keys().hasAll(['userId', 'subject', 'topic', 'priority', 'message', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'subject', 'topic', 'priority', 'message', 'status', 'createdAt', 'updatedAt'])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && data.userId.size() >= 1
+        && data.userId.size() <= 128
+        && data.subject is string
+        && data.subject.size() >= 1
+        && data.subject.size() <= 120
+        && data.topic is string
+        && data.topic.size() <= 20
+        && data.topic in ['carteira', 'previsoes', 'assinatura', 'bug', 'outro']
+        && data.priority is string
+        && data.priority.size() <= 16
+        && data.priority in ['normal', 'high']
+        && data.message is string
+        && data.message.size() >= 1
+        && data.message.size() <= 1500
+        && data.status is string
+        && data.status.size() <= 16
+        && data.status in ['open', 'in_progress', 'resolved']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     // Users collection (PII isolated to owner only, no list)
     match /users/{userId} {
       allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
@@ -148,6 +251,8 @@ service cloud.firestore {
         && request.auth.uid == userId
         && isValidUserProfile(incoming())
         && incoming().isPro == false
+        && (!('proPlan' in incoming()) || incoming().proPlan == 'free')
+        && (!('proActivatedAt' in incoming()) || incoming().proActivatedAt == null)
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time;
       allow update: if isVerified()
@@ -155,10 +260,25 @@ service cloud.firestore {
         && request.auth.uid == userId
         && isValidUserProfile(incoming())
         && incoming().uid == existing().uid
+        && incoming().email == existing().email
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && incoming().isPro == existing().isPro
-        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'birthDate', 'updatedAt']);
+        && (
+          // Action: Update profile details
+          (
+            incoming().isPro == existing().isPro
+            && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'birthDate', 'updatedAt'])
+          )
+          ||
+          // Action: Activate or manage GranaMax PRO subscription (interactive demo mode)
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['isPro', 'proPlan', 'proActivatedAt', 'updatedAt'])
+            && (
+              (incoming().isPro == true && incoming().proPlan in ['monthly', 'yearly'] && incoming().proActivatedAt == request.time)
+              || (incoming().isPro == false && incoming().proPlan == 'free' && incoming().proActivatedAt == null)
+            )
+          )
+        );
       allow delete: if false;
     }
 
@@ -199,7 +319,13 @@ service cloud.firestore {
         && incoming().userId == existing().userId
         && incoming().boughtAt == existing().boughtAt
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['currentValue', 'updatedAt']);
+        && (
+          // Action: Quick market value update
+          incoming().diff(existing()).affectedKeys().hasOnly(['currentValue', 'updatedAt'])
+          ||
+          // Action: Full portfolio asset edit
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'amount', 'currentValue', 'type', 'institution', 'notes', 'updatedAt'])
+        );
       allow delete: if isVerified()
         && isValidId(investmentId)
         && existing().userId == request.auth.uid;
@@ -248,6 +374,87 @@ service cloud.firestore {
         && incoming().diff(existing()).affectedKeys().hasOnly(['description', 'amount', 'type', 'category', 'dayOfMonth', 'active', 'lastGeneratedMonth', 'updatedAt']);
       allow delete: if isVerified()
         && isValidId(recurringId)
+        && existing().userId == request.auth.uid;
+    }
+
+    // Wealth Snapshots collection
+    match /wealthSnapshots/{snapshotId} {
+      allow get: if isSignedIn() && isValidId(snapshotId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+        && isValidId(snapshotId)
+        && snapshotId == request.auth.uid + '_' + incoming().month
+        && isValidWealthSnapshot(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(snapshotId)
+        && existing().userId == request.auth.uid
+        && isValidWealthSnapshot(incoming())
+        && incoming().userId == existing().userId
+        && incoming().month == existing().month
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['cashBalance', 'investmentsValue', 'netWorth', 'updatedAt']);
+      allow delete: if isVerified()
+        && isValidId(snapshotId)
+        && existing().userId == request.auth.uid;
+    }
+
+    // Custom Alerts collection
+    match /customAlerts/{alertId} {
+      allow get: if isSignedIn() && isValidId(alertId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+        && isValidId(alertId)
+        && isValidCustomAlert(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(alertId)
+        && existing().userId == request.auth.uid
+        && isValidCustomAlert(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Toggle active status
+          incoming().diff(existing()).affectedKeys().hasOnly(['active', 'updatedAt'])
+          ||
+          // Action: Edit alert rule parameters
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'metric', 'category', 'threshold', 'active', 'updatedAt'])
+        );
+      allow delete: if isVerified()
+        && isValidId(alertId)
+        && existing().userId == request.auth.uid;
+    }
+
+    // Priority Support Tickets collection
+    match /supportTickets/{ticketId} {
+      allow get: if isSignedIn() && isValidId(ticketId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified()
+        && isValidId(ticketId)
+        && isValidSupportTicket(incoming())
+        && incoming().status == 'open'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(ticketId)
+        && existing().userId == request.auth.uid
+        && existing().status != 'resolved'
+        && isValidSupportTicket(incoming())
+        && incoming().userId == existing().userId
+        && incoming().subject == existing().subject
+        && incoming().topic == existing().topic
+        && incoming().priority == existing().priority
+        && incoming().message == existing().message
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().status in ['in_progress', 'resolved']
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isVerified()
+        && isValidId(ticketId)
         && existing().userId == request.auth.uid;
     }
   }

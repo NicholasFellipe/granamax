@@ -1,8 +1,23 @@
 // 📊 DASHBOARD PRINCIPAL
 
 import { useState, useMemo } from 'react';
-import { 
-  Wallet, TrendingUp, TrendingDown, Plus, LogOut, Crown, PieChart, Briefcase, Filter, Repeat, CheckCircle2, X, Mic
+import {
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  Plus,
+  LogOut,
+  Crown,
+  PieChart,
+  Briefcase,
+  Filter,
+  Repeat,
+  CheckCircle2,
+  X,
+  Mic,
+  Bell,
+  Headphones,
+  Check,
 } from 'lucide-react';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
@@ -19,15 +34,41 @@ import { DailyBudgetCard } from './DailyBudgetCard';
 import { MonthlyBudgetCard } from './MonthlyBudgetCard';
 import { AchievementsPanel } from './AchievementsPanel';
 import { InsightsCard } from './InsightsCard';
+import { FreePromoBanner } from './FreePromoBanner';
+import { ProAnalyticsPanel } from './ProAnalyticsPanel';
+import { CustomAlertsPanel } from './CustomAlertsPanel';
+import { PrioritySupportPanel } from './PrioritySupportPanel';
 import { useRetention } from '../hooks/useRetention';
 import useTransactions from '../hooks/useTransactions';
 import useMonthlyBudget from '../hooks/useMonthlyBudget';
 import useRecurringTransactions from '../hooks/useRecurringTransactions';
+import useInvestments from '../hooks/useInvestments';
+import useWealthHistory from '../hooks/useWealthHistory';
+import useCustomAlerts from '../hooks/useCustomAlerts';
+import useSupportTickets from '../hooks/useSupportTickets';
 import type { User } from '../types';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const CATEGORIES = ['Todas', 'Alimentação', 'Transporte', 'Moradia', 'Saúde', 'Lazer', 'Educação', 'Outros'];
+const CATEGORIES = [
+  'Todas',
+  'Alimentação',
+  'Transporte',
+  'Moradia',
+  'Saúde',
+  'Lazer',
+  'Educação',
+  'Outros',
+];
+
+type DashboardTab =
+  | 'overview'
+  | 'transactions'
+  | 'recurring'
+  | 'analytics'
+  | 'investments'
+  | 'alerts'
+  | 'support';
 
 interface DashboardProps {
   user: User;
@@ -35,14 +76,18 @@ interface DashboardProps {
   onUpgradeToPro: () => void;
 }
 
+function formatBRL(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showVoiceTransaction, setShowVoiceTransaction] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'transactions' | 'recurring' | 'analytics' | 'investments'
-  >('overview');
+  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
 
-  // Filtros
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(format(now, 'yyyy-MM'));
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -73,10 +118,46 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
     dismissAutoPopulatedBanner,
   } = useRecurringTransactions(user.uid);
 
-  // Gerar lista dos últimos 12 meses para o seletor
+  const {
+    investments,
+    loading: investmentsLoading,
+    addInvestment,
+    updateInvestmentValue,
+    updateInvestment,
+    deleteInvestment,
+    totalInvested,
+    totalValue: investmentsTotalValue,
+    totalProfit: investmentsTotalProfit,
+    profitPercentage: investmentsProfitPct,
+  } = useInvestments(user.uid, user.isPro);
+
+  const {
+    series: wealthSeries,
+    loading: wealthLoading,
+    saveMonthSnapshot,
+  } = useWealthHistory(user.uid, user.isPro, transactions, investments);
+
+  const {
+    evaluations: customAlertEvaluations,
+    triggeredDashboardAlerts,
+    loading: customAlertsLoading,
+    addCustomAlert,
+    toggleCustomAlert,
+    deleteCustomAlert,
+  } = useCustomAlerts(user.uid, user.isPro, transactions, investmentsTotalValue);
+
+  const {
+    tickets: supportTickets,
+    loading: supportLoading,
+    createTicket,
+    resolveTicket,
+    deleteTicket,
+  } = useSupportTickets(user.uid, user.isPro);
+
   const monthOptions = useMemo(() => {
+    const base = new Date();
     return Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
       return {
         value: format(d, 'yyyy-MM'),
         label: format(d, "MMMM 'de' yyyy", { locale: ptBR }),
@@ -85,8 +166,8 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
   }, []);
 
   const availableCategories = useMemo(() => {
-    const base = CATEGORIES.filter(c => c !== 'Todas');
-    const custom = transactions.map(t => t.category).filter(Boolean);
+    const base = CATEGORIES.filter((c) => c !== 'Todas');
+    const custom = transactions.map((t) => t.category).filter(Boolean);
     return Array.from(new Set([...base, ...custom]));
   }, [transactions]);
 
@@ -95,38 +176,55 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
     const start = startOfMonth(new Date(year, month - 1));
     const end = endOfMonth(new Date(year, month - 1));
 
-    return transactions.filter(t => {
+    return transactions.filter((t) => {
       const inMonth = t.date >= start && t.date <= end;
       const inType = selectedType === 'all' || t.type === selectedType;
       return inMonth && inType;
     });
   }, [transactions, selectedMonth, selectedType]);
 
-  // Transações filtradas
   const filteredTransactions = useMemo(() => {
-    return monthTransactions.filter(t => {
+    return monthTransactions.filter((t) => {
       return selectedCategory === 'Todas' || t.category === selectedCategory;
     });
   }, [monthTransactions, selectedCategory]);
 
-  // Totais baseados nas transações filtradas
-  const balance = filteredTransactions.reduce((acc, t) =>
-    t.type === 'income' ? acc + t.amount : acc - t.amount, 0);
-  const totalIncome = filteredTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-  const totalExpenses = filteredTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+  const balance = filteredTransactions.reduce(
+    (acc, t) => (t.type === 'income' ? acc + t.amount : acc - t.amount),
+    0
+  );
+  const totalIncome = filteredTransactions
+    .filter((t) => t.type === 'income')
+    .reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = filteredTransactions
+    .filter((t) => t.type === 'expense')
+    .reduce((acc, t) => acc + t.amount, 0);
 
-  const currentMonthLabel = monthOptions.find(m => m.value === selectedMonth)?.label || selectedMonth;
+  const cumulativeCashBalance = useMemo(() => {
+    return transactions.reduce(
+      (acc, t) => (t.type === 'income' ? acc + t.amount : acc - t.amount),
+      0
+    );
+  }, [transactions]);
+
+  const currentMonthLabel =
+    monthOptions.find((m) => m.value === selectedMonth)?.label || selectedMonth;
 
   const monthlyExpenses = useMemo(() => {
     const [year, month] = selectedMonth.split('-').map(Number);
     const start = startOfMonth(new Date(year, month - 1));
     const end = endOfMonth(new Date(year, month - 1));
     return transactions
-      .filter(t => t.type === 'expense' && t.date >= start && t.date <= end)
+      .filter((t) => t.type === 'expense' && t.date >= start && t.date <= end)
       .reduce((acc, t) => acc + t.amount, 0);
   }, [transactions, selectedMonth]);
 
   const activeMonthlyBudget = getBudgetForMonth(selectedMonth);
+
+  const combinedAlerts = useMemo(
+    () => [...triggeredDashboardAlerts, ...alerts],
+    [triggeredDashboardAlerts, alerts]
+  );
 
   const fullName = user.displayName?.trim() || user.email.split('@')[0];
   const nameParts = fullName.split(/\s+/).filter(Boolean);
@@ -136,6 +234,9 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
       : fullName.slice(0, 2).toUpperCase();
   const [failedPhotoUrl, setFailedPhotoUrl] = useState<string | null>(null);
   const showPhoto = Boolean(user.photoURL && failedPhotoUrl !== user.photoURL);
+
+  const showFiltersBar =
+    activeTab === 'overview' || activeTab === 'transactions' || activeTab === 'analytics';
 
   return (
     <div className="dashboard">
@@ -167,9 +268,24 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                 </div>
               </div>
               {user.isPro ? (
-                <Badge variant="pro" size="sm"><Crown size={14} />PRO</Badge>
+                <button
+                  type="button"
+                  onClick={onUpgradeToPro}
+                  className="pro-header-pill-btn"
+                  title="Gerenciar assinatura GranaMax PRO"
+                >
+                  <Badge variant="pro" size="sm">
+                    <Crown size={14} />
+                    PRO
+                  </Badge>
+                </button>
               ) : (
-                <Button variant="pro" size="sm" onClick={onUpgradeToPro} icon={<Crown size={16} />}>
+                <Button
+                  variant="pro"
+                  size="sm"
+                  onClick={onUpgradeToPro}
+                  icon={<Crown size={16} />}
+                >
                   Upgrade PRO
                 </Button>
               )}
@@ -185,83 +301,138 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
       <div className="dashboard-tabs">
         <div className="container">
           <div className="tabs">
-            <button className={`tab ${activeTab === 'overview' ? 'tab-active' : ''}`} onClick={() => setActiveTab('overview')}>
+            <button
+              type="button"
+              className={`tab ${activeTab === 'overview' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
               Visão Geral
             </button>
-            <button className={`tab ${activeTab === 'transactions' ? 'tab-active' : ''}`} onClick={() => setActiveTab('transactions')}>
+            <button
+              type="button"
+              className={`tab ${activeTab === 'transactions' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('transactions')}
+            >
               Transações
             </button>
-            <button className={`tab ${activeTab === 'recurring' ? 'tab-active' : ''}`} onClick={() => setActiveTab('recurring')}>
-              <Repeat size={16} />Recorrentes
+            <button
+              type="button"
+              className={`tab ${activeTab === 'recurring' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('recurring')}
+            >
+              <Repeat size={16} />
+              Recorrentes
             </button>
-            <button className={`tab ${activeTab === 'analytics' ? 'tab-active' : ''}`} onClick={() => setActiveTab('analytics')}>
-              <PieChart size={16} />Análise
+            <button
+              type="button"
+              className={`tab ${activeTab === 'analytics' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              <PieChart size={16} />
+              Análise
               {!user.isPro && <Badge variant="pro" size="sm">PRO</Badge>}
             </button>
-            {user.isPro && (
-              <button className={`tab ${activeTab === 'investments' ? 'tab-active' : ''}`} onClick={() => setActiveTab('investments')}>
-                <Briefcase size={16} />Investimentos
-                <Badge variant="pro" size="sm">PRO</Badge>
-              </button>
-            )}
+            <button
+              type="button"
+              className={`tab ${activeTab === 'investments' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('investments')}
+            >
+              <Briefcase size={16} />
+              Investimentos
+              {!user.isPro && <Badge variant="pro" size="sm">PRO</Badge>}
+            </button>
+            <button
+              type="button"
+              className={`tab ${activeTab === 'alerts' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('alerts')}
+            >
+              <Bell size={16} />
+              Alertas
+              {triggeredDashboardAlerts.length > 0 && (
+                <span className="tab-count-dot">{triggeredDashboardAlerts.length}</span>
+              )}
+            </button>
+            <button
+              type="button"
+              className={`tab ${activeTab === 'support' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('support')}
+            >
+              <Headphones size={16} />
+              Suporte
+              {!user.isPro && <Badge variant="pro" size="sm">PRO</Badge>}
+            </button>
           </div>
         </div>
       </div>
 
       {/* FILTROS */}
-      {activeTab !== 'recurring' && activeTab !== 'investments' && (
-      <div className="filters-bar">
-        <div className="container">
-          <div className="filters-row">
-            <div className="filter-group">
-              <Filter size={16} className="filter-icon" />
-              <select
-                className="filter-select"
-                value={selectedMonth}
-                onChange={e => setSelectedMonth(e.target.value)}
-              >
-                {monthOptions.map(m => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
-            </div>
+      {showFiltersBar && (
+        <div className="filters-bar">
+          <div className="container">
+            <div className="filters-row">
+              <div className="filter-group">
+                <Filter size={16} className="filter-icon" />
+                <select
+                  className="filter-select"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                >
+                  {monthOptions.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="filter-group">
-              <select
-                className="filter-select"
-                value={selectedCategory}
-                onChange={e => setSelectedCategory(e.target.value)}
-              >
-                <option value="Todas">Todas</option>
-                {availableCategories.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
+              {activeTab !== 'analytics' && (
+                <>
+                  <div className="filter-group">
+                    <select
+                      className="filter-select"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      <option value="Todas">Todas</option>
+                      {availableCategories.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div className="filter-group">
-              <select
-                className="filter-select"
-                value={selectedType}
-                onChange={e => setSelectedType(e.target.value as 'all' | 'income' | 'expense')}
-              >
-                <option value="all">Receitas e Despesas</option>
-                <option value="income">Só Receitas</option>
-                <option value="expense">Só Despesas</option>
-              </select>
-            </div>
+                  <div className="filter-group">
+                    <select
+                      className="filter-select"
+                      value={selectedType}
+                      onChange={(e) =>
+                        setSelectedType(e.target.value as 'all' | 'income' | 'expense')
+                      }
+                    >
+                      <option value="all">Receitas e Despesas</option>
+                      <option value="income">Só Receitas</option>
+                      <option value="expense">Só Despesas</option>
+                    </select>
+                  </div>
 
-            {(selectedCategory !== 'Todas' || selectedType !== 'all') && (
-              <button
-                className="filter-clear"
-                onClick={() => { setSelectedCategory('Todas'); setSelectedType('all'); }}
-              >
-                Limpar filtros
-              </button>
-            )}
+                  {(selectedCategory !== 'Todas' || selectedType !== 'all') && (
+                    <button
+                      type="button"
+                      className="filter-clear"
+                      onClick={() => {
+                        setSelectedCategory('Todas');
+                        setSelectedType('all');
+                      }}
+                    >
+                      Limpar filtros
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       <main className="dashboard-content">
@@ -292,7 +463,10 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
 
           {activeTab === 'overview' && (
             <>
-              <AlertsPanel alerts={alerts} />
+              {!user.isPro && <FreePromoBanner onUpgrade={onUpgradeToPro} />}
+
+              <AlertsPanel alerts={combinedAlerts} />
+
               <div className="budgets-grid">
                 <DailyBudgetCard budget={dailyBudget} />
                 <MonthlyBudgetCard
@@ -311,28 +485,34 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                   <div className="stat-label">Saldo</div>
                   <div className="stat-value stat-value-large">
                     {balance >= 0 ? (
-                      <span className="text-primary">R$ {balance.toFixed(2).replace('.', ',')}</span>
+                      <span className="text-primary">R$ {formatBRL(balance)}</span>
                     ) : (
-                      <span className="text-danger">-R$ {Math.abs(balance).toFixed(2).replace('.', ',')}</span>
+                      <span className="text-danger">-R$ {formatBRL(Math.abs(balance))}</span>
                     )}
                   </div>
                   <div className="stat-period">{currentMonthLabel}</div>
                 </Card>
                 <Card className="stat-card-income">
-                  <div className="stat-icon stat-icon-income"><TrendingUp size={24} /></div>
+                  <div className="stat-icon stat-icon-income">
+                    <TrendingUp size={24} />
+                  </div>
                   <div className="stat-label">Receitas</div>
-                  <div className="stat-value">R$ {totalIncome.toFixed(2).replace('.', ',')}</div>
+                  <div className="stat-value">R$ {formatBRL(totalIncome)}</div>
                 </Card>
                 <Card className="stat-card-expense">
-                  <div className="stat-icon stat-icon-expense"><TrendingDown size={24} /></div>
+                  <div className="stat-icon stat-icon-expense">
+                    <TrendingDown size={24} />
+                  </div>
                   <div className="stat-label">Despesas</div>
-                  <div className="stat-value">R$ {totalExpenses.toFixed(2).replace('.', ',')}</div>
+                  <div className="stat-value">R$ {formatBRL(totalExpenses)}</div>
                 </Card>
               </div>
 
               <Card>
                 <CardHeader title="Últimos 7 dias" subtitle="Acompanhe seus gastos diários" />
-                <CardContent><ExpenseChart transactions={filteredTransactions} /></CardContent>
+                <CardContent>
+                  <ExpenseChart transactions={filteredTransactions} />
+                </CardContent>
               </Card>
 
               <Card>
@@ -357,7 +537,7 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                     loading={txLoading}
                     activeCategory={selectedCategory}
                     onSelectCategory={(cat) =>
-                      setSelectedCategory(prev => (prev === cat ? 'Todas' : cat))
+                      setSelectedCategory((prev) => (prev === cat ? 'Todas' : cat))
                     }
                     onAddExpense={() => setShowAddTransaction(true)}
                   />
@@ -372,10 +552,20 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                   title="Transações Recentes"
                   action={
                     <div className="dashboard-card-actions">
-                      <Button variant="secondary" size="sm" onClick={() => setShowVoiceTransaction(true)} icon={<Mic size={16} />}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowVoiceTransaction(true)}
+                        icon={<Mic size={16} />}
+                      >
                         Por Voz
                       </Button>
-                      <Button variant="primary" size="sm" onClick={() => setShowAddTransaction(true)} icon={<Plus size={16} />}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setShowAddTransaction(true)}
+                        icon={<Plus size={16} />}
+                      >
                         Adicionar
                       </Button>
                     </div>
@@ -401,10 +591,18 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                 title={`Transações — ${currentMonthLabel}`}
                 action={
                   <div className="dashboard-card-actions">
-                    <Button variant="secondary" onClick={() => setShowVoiceTransaction(true)} icon={<Mic size={16} />}>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowVoiceTransaction(true)}
+                      icon={<Mic size={16} />}
+                    >
                       Adicionar por Voz
                     </Button>
-                    <Button variant="primary" onClick={() => setShowAddTransaction(true)} icon={<Plus size={16} />}>
+                    <Button
+                      variant="primary"
+                      onClick={() => setShowAddTransaction(true)}
+                      icon={<Plus size={16} />}
+                    >
                       Nova Transação
                     </Button>
                   </div>
@@ -433,58 +631,168 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
             />
           )}
 
-          {activeTab === 'analytics' && (
-            <>
-              {user.isPro ? (
-                <div className="analytics-grid">
-                  <Card>
-                    <CardHeader title="Evolução Mensal" />
-                    <CardContent><ExpenseChart transactions={filteredTransactions} showComparison /></CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader title="Categorias Detalhadas" />
-                    <CardContent><CategoryBreakdown transactions={filteredTransactions} detailed /></CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader title="Previsão de Gastos" subtitle="Baseado no seu histórico" />
-                    <CardContent>
-                      <div className="prediction-info">
-                        <div className="prediction-item">
-                          <span className="prediction-label">Previsão para o mês:</span>
-                          <span className="prediction-value text-warning">
-                            R$ {(totalExpenses * 1.15).toFixed(2).replace('.', ',')}
-                          </span>
-                        </div>
-                        <p className="prediction-note">
-                          ⚠️ Você está gastando mais que o normal. Considere reduzir despesas não essenciais.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <Card className="pro-upsell-card">
-                  <div className="empty-state">
-                    <div className="empty-icon"><Crown size={64} /></div>
-                    <h3 className="empty-title">Análise Avançada - PRO</h3>
-                    <p className="empty-description">
-                      Desbloqueie análises detalhadas, previsões inteligentes e insights para maximizar suas economias
-                    </p>
-                    <Button variant="pro" size="lg" onClick={onUpgradeToPro} icon={<Crown size={20} />}>
-                      Assinar GranaMax PRO - R$ 9,90/mês
-                    </Button>
+          {activeTab === 'analytics' &&
+            (user.isPro ? (
+              <ProAnalyticsPanel
+                selectedMonth={selectedMonth}
+                selectedMonthLabel={currentMonthLabel}
+                allTransactions={transactions}
+                recurringItems={recurringItems}
+                monthlyBudgetLimit={activeMonthlyBudget ? activeMonthlyBudget.limit : null}
+                investmentTotal={investmentsTotalValue}
+                currentCashBalance={cumulativeCashBalance}
+                wealthSeries={wealthSeries}
+                wealthLoading={wealthLoading}
+                onSaveWealthSnapshot={saveMonthSnapshot}
+                onAddExpense={() => setShowAddTransaction(true)}
+              />
+            ) : (
+              <Card className="pro-upsell-card">
+                <div className="empty-state pro-gate-content">
+                  <div className="pro-gate-icon">
+                    <Crown size={40} />
                   </div>
-                </Card>
-              )}
-            </>
+                  <h3 className="empty-title">Análise Avançada e Previsões com IA — PRO</h3>
+                  <p className="empty-description">
+                    Antecipe o fechamento do seu mês com previsões inteligentes, compare categorias mês a mês e visualize sua evolução patrimonial completa.
+                  </p>
+                  <ul className="pro-gate-bullets">
+                    <li>
+                      <Check size={16} /> Previsões inteligentes de gastos com IA Gemini
+                    </li>
+                    <li>
+                      <Check size={16} /> Tabela detalhada por categoria (ticket médio, maior gasto e variação mensal)
+                    </li>
+                    <li>
+                      <Check size={16} /> Gráfico de evolução patrimonial de 6 meses com marcos salvos
+                    </li>
+                  </ul>
+                  <Button
+                    variant="pro"
+                    size="lg"
+                    onClick={onUpgradeToPro}
+                    icon={<Crown size={18} />}
+                  >
+                    Ativar GranaMax PRO — a partir de R$ 7,49/mês
+                  </Button>
+                </div>
+              </Card>
+            ))}
+
+          {activeTab === 'investments' &&
+            (user.isPro ? (
+              <InvestmentsPanel
+                investments={investments}
+                loading={investmentsLoading}
+                totalInvested={totalInvested}
+                totalValue={investmentsTotalValue}
+                totalProfit={investmentsTotalProfit}
+                profitPercentage={investmentsProfitPct}
+                onAddInvestment={addInvestment}
+                onUpdateInvestmentValue={updateInvestmentValue}
+                onUpdateInvestment={updateInvestment}
+                onDeleteInvestment={deleteInvestment}
+                wealthSeries={wealthSeries}
+                wealthLoading={wealthLoading}
+                currentCashBalance={cumulativeCashBalance}
+                onSaveWealthSnapshot={saveMonthSnapshot}
+              />
+            ) : (
+              <Card className="pro-upsell-card">
+                <div className="empty-state pro-gate-content">
+                  <div className="pro-gate-icon">
+                    <Briefcase size={40} />
+                  </div>
+                  <h3 className="empty-title">Carteira Completa e Simulador Avançado — PRO</h3>
+                  <p className="empty-description">
+                    Acompanhe todos os seus investimentos em um só lugar e simule juros compostos com inflação (IPCA), imposto regressivo e comparativo de cenários.
+                  </p>
+                  <ul className="pro-gate-bullets">
+                    <li>
+                      <Check size={16} /> Controle completo em 6 classes (Renda Fixa, Ações, FIIs, Fundos, Cripto e Reserva)
+                    </li>
+                    <li>
+                      <Check size={16} /> Alocação por classe, corretora, rentabilidade e atualização rápida
+                    </li>
+                    <li>
+                      <Check size={16} /> Simulador avançado com presets de mercado, IPCA, IR e Cenário B
+                    </li>
+                  </ul>
+                  <Button
+                    variant="pro"
+                    size="lg"
+                    onClick={onUpgradeToPro}
+                    icon={<Crown size={18} />}
+                  >
+                    Desbloquear Carteira e Simulador PRO
+                  </Button>
+                </div>
+              </Card>
+            ))}
+
+          {activeTab === 'alerts' && (
+            <CustomAlertsPanel
+              isPro={user.isPro}
+              evaluations={customAlertEvaluations}
+              loading={customAlertsLoading}
+              availableCategories={availableCategories}
+              onCreateAlert={addCustomAlert}
+              onToggleAlert={toggleCustomAlert}
+              onDeleteAlert={deleteCustomAlert}
+              onUpgradeToPro={onUpgradeToPro}
+            />
           )}
 
-          {activeTab === 'investments' && user.isPro && <InvestmentsPanel />}
+          {activeTab === 'support' &&
+            (user.isPro ? (
+              <PrioritySupportPanel
+                tickets={supportTickets}
+                loading={supportLoading}
+                userEmail={user.email}
+                onCreateTicket={createTicket}
+                onResolveTicket={resolveTicket}
+                onDeleteTicket={deleteTicket}
+              />
+            ) : (
+              <Card className="pro-upsell-card">
+                <div className="empty-state pro-gate-content">
+                  <div className="pro-gate-icon">
+                    <Headphones size={40} />
+                  </div>
+                  <h3 className="empty-title">Central de Suporte Prioritário — PRO</h3>
+                  <p className="empty-description">
+                    Assinantes GranaMax PRO contam com fila dedicada de atendimento direto no app, acompanhamento de protocolos e prioridade máxima.
+                  </p>
+                  <ul className="pro-gate-bullets">
+                    <li>
+                      <Check size={16} /> Fila prioritária exclusiva com tempo médio de resposta &lt; 2h
+                    </li>
+                    <li>
+                      <Check size={16} /> Histórico de chamados com protocolo e status em tempo real
+                    </li>
+                    <li>
+                      <Check size={16} /> Experiência completa 100% sem anúncios
+                    </li>
+                  </ul>
+                  <Button
+                    variant="pro"
+                    size="lg"
+                    onClick={onUpgradeToPro}
+                    icon={<Crown size={18} />}
+                  >
+                    Ativar Suporte Prioritário PRO
+                  </Button>
+                </div>
+              </Card>
+            ))}
         </div>
       </main>
 
       {showAddTransaction && (
-        <AddTransactionModal onClose={() => setShowAddTransaction(false)} onAdd={addTransaction} />
+        <AddTransactionModal
+          onClose={() => setShowAddTransaction(false)}
+          onAdd={addTransaction}
+        />
       )}
 
       {showVoiceTransaction && (

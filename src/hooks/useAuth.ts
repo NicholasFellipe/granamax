@@ -91,12 +91,22 @@ async function ensureUserProfile(
       }
     }
 
+    const rawProPlan = data.proPlan;
+    const proPlan: User['proPlan'] =
+      rawProPlan === 'monthly' || rawProPlan === 'yearly' || rawProPlan === 'free'
+        ? rawProPlan
+        : data.isPro
+          ? 'monthly'
+          : 'free';
+
     return {
       uid: firebaseUser.uid,
       email: (data.email as string) || safeEmail,
       displayName: nextDisplayName || undefined,
       photoURL: nextPhotoURL || undefined,
       isPro: Boolean(data.isPro),
+      proPlan,
+      proActivatedAt: data.proActivatedAt?.toDate ? data.proActivatedAt.toDate() : null,
       birthDate: (data.birthDate as string | null) ?? null,
       createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
     };
@@ -111,6 +121,8 @@ async function ensureUserProfile(
         photoURL: safePhotoURL,
         birthDate: safeBirthDate,
         isPro: false,
+        proPlan: 'free',
+        proActivatedAt: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -125,6 +137,8 @@ async function ensureUserProfile(
     displayName: safeDisplayName || undefined,
     photoURL: safePhotoURL || undefined,
     isPro: false,
+    proPlan: 'free',
+    proActivatedAt: null,
     birthDate: safeBirthDate,
     createdAt: new Date(),
   };
@@ -149,6 +163,8 @@ function useAuth() {
             displayName: firebaseUser.displayName || undefined,
             photoURL: firebaseUser.photoURL || undefined,
             isPro: false,
+            proPlan: 'free',
+            proActivatedAt: null,
             createdAt: new Date(),
           });
         }
@@ -200,13 +216,89 @@ function useAuth() {
     }
   };
 
+  const activateProPlan = async (plan: 'monthly' | 'yearly') => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser || !user) {
+      throw new Error('Usuário não autenticado.');
+    }
+    const userPath = `users/${firebaseUser.uid}`;
+    const userRef = doc(db, 'users', firebaseUser.uid);
+
+    if (firebaseUser.emailVerified) {
+      try {
+        await updateDoc(userRef, {
+          isPro: true,
+          proPlan: plan,
+          proActivatedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, userPath);
+      }
+    }
+
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            isPro: true,
+            proPlan: plan,
+            proActivatedAt: new Date(),
+          }
+        : prev
+    );
+  };
+
+  const downgradeToFree = async () => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser || !user) {
+      throw new Error('Usuário não autenticado.');
+    }
+    const userPath = `users/${firebaseUser.uid}`;
+    const userRef = doc(db, 'users', firebaseUser.uid);
+
+    if (firebaseUser.emailVerified) {
+      try {
+        await updateDoc(userRef, {
+          isPro: false,
+          proPlan: 'free',
+          proActivatedAt: null,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.UPDATE, userPath);
+      }
+    }
+
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            isPro: false,
+            proPlan: 'free',
+            proActivatedAt: null,
+          }
+        : prev
+    );
+  };
+
   const signOut = async () => {
     setError(null);
     await firebaseSignOut(auth);
     setUser(null);
   };
 
-  return { user, loading, error, signInWithGoogle, signUp, signIn, signOut };
+  return {
+    user,
+    loading,
+    error,
+    signInWithGoogle,
+    signUp,
+    signIn,
+    signOut,
+    activateProPlan,
+    downgradeToFree,
+  };
 }
 
 export default useAuth;

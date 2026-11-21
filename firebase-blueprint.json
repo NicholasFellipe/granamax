@@ -37,6 +37,16 @@
           "type": "boolean",
           "description": "Status de assinatura GranaMax PRO"
         },
+        "proPlan": {
+          "type": "string",
+          "enum": ["free", "monthly", "yearly"],
+          "description": "Plano ativo da assinatura GranaMax"
+        },
+        "proActivatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de ativação da assinatura PRO"
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -98,7 +108,7 @@
     },
     "Investment": {
       "title": "Investment",
-      "description": "Ativo de investimento do usuário PRO",
+      "description": "Ativo de investimento da carteira completa do usuário PRO",
       "type": "object",
       "properties": {
         "userId": {
@@ -110,7 +120,7 @@
         },
         "name": {
           "type": "string",
-          "description": "Nome do ativo",
+          "description": "Nome ou ticker do ativo",
           "minLength": 1,
           "maxLength": 100
         },
@@ -124,8 +134,18 @@
         },
         "type": {
           "type": "string",
-          "enum": ["stocks", "crypto", "funds", "savings"],
-          "description": "Categoria do investimento"
+          "enum": ["stocks", "reits", "fixed_income", "funds", "crypto", "savings"],
+          "description": "Classe do ativo na carteira"
+        },
+        "institution": {
+          "type": "string",
+          "description": "Corretora ou banco onde o ativo está custodiado",
+          "maxLength": 80
+        },
+        "notes": {
+          "type": "string",
+          "description": "Anotações opcionais sobre tese, vencimento ou rentabilidade",
+          "maxLength": 240
         },
         "boughtAt": {
           "type": "string",
@@ -245,6 +265,151 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "WealthSnapshot": {
+      "title": "WealthSnapshot",
+      "description": "Marco mensal de evolução patrimonial do usuário PRO",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID do proprietário do marco patrimonial",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "month": {
+          "type": "string",
+          "description": "Mês de referência no formato YYYY-MM",
+          "minLength": 7,
+          "maxLength": 7,
+          "pattern": "^\\d{4}-\\d{2}$"
+        },
+        "cashBalance": {
+          "type": "number",
+          "description": "Saldo acumulado em conta no fechamento do marco"
+        },
+        "investmentsValue": {
+          "type": "number",
+          "description": "Valor total da carteira de investimentos no marco"
+        },
+        "netWorth": {
+          "type": "number",
+          "description": "Patrimônio líquido total (saldo + investimentos)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de criação no servidor"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de atualização no servidor"
+        }
+      },
+      "required": ["userId", "month", "cashBalance", "investmentsValue", "netWorth", "createdAt", "updatedAt"]
+    },
+    "CustomAlert": {
+      "title": "CustomAlert",
+      "description": "Regra personalizada de monitoramento financeiro criada pelo usuário",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID do proprietário do alerta",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Nome identificador da regra de alerta",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "metric": {
+          "type": "string",
+          "enum": ["category_monthly", "min_balance", "single_expense", "portfolio_goal"],
+          "description": "Métrica monitorada pela regra"
+        },
+        "category": {
+          "type": "string",
+          "description": "Categoria alvo (para regras de limite mensal por categoria)",
+          "maxLength": 40
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Valor de gatilho positivo em reais"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indica se a regra está ativa"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de criação no servidor"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de atualização no servidor"
+        }
+      },
+      "required": ["userId", "name", "metric", "category", "threshold", "active", "createdAt", "updatedAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "Chamado de suporte prioritário aberto por assinante GranaMax PRO",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "UID do proprietário do chamado",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "subject": {
+          "type": "string",
+          "description": "Assunto resumido do chamado",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "topic": {
+          "type": "string",
+          "enum": ["carteira", "previsoes", "assinatura", "bug", "outro"],
+          "description": "Tema do atendimento"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["normal", "high"],
+          "description": "Nível de prioridade na fila PRO"
+        },
+        "message": {
+          "type": "string",
+          "description": "Descrição detalhada da solicitação",
+          "minLength": 1,
+          "maxLength": 1500
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "in_progress", "resolved"],
+          "description": "Status atual do atendimento"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data de abertura no servidor"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data da última atualização no servidor"
+        }
+      },
+      "required": ["userId", "subject", "topic", "priority", "message", "status", "createdAt", "updatedAt"]
     }
   },
   "firestore": {
@@ -258,7 +423,7 @@
     },
     "/investments/{investmentId}": {
       "schema": { "$ref": "#/entities/Investment" },
-      "description": "Investimentos registrados pelo usuário"
+      "description": "Investimentos registrados na carteira completa do usuário"
     },
     "/monthlyBudgets/{budgetId}": {
       "schema": { "$ref": "#/entities/MonthlyBudget" },
@@ -267,6 +432,18 @@
     "/recurringTransactions/{recurringId}": {
       "schema": { "$ref": "#/entities/RecurringTransaction" },
       "description": "Contas fixas e receitas recorrentes mensais por usuário"
+    },
+    "/wealthSnapshots/{snapshotId}": {
+      "schema": { "$ref": "#/entities/WealthSnapshot" },
+      "description": "Marcos mensais de evolução patrimonial por usuário e mês"
+    },
+    "/customAlerts/{alertId}": {
+      "schema": { "$ref": "#/entities/CustomAlert" },
+      "description": "Regras personalizadas de alertas financeiros por usuário"
+    },
+    "/supportTickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "Chamados da central de suporte prioritário PRO por usuário"
     }
   }
 }

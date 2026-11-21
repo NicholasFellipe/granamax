@@ -1,53 +1,105 @@
-// ➕ MODAL DE ADICIONAR INVESTIMENTO
+// ➕ MODAL DE ADICIONAR / EDITAR ATIVO DA CARTEIRA (PRO)
 
-import { useState, FormEvent } from 'react';
-import { X, DollarSign } from 'lucide-react';
-import { Input } from './ui/Input';
+import { useState, type FormEvent } from 'react';
+import { X, TrendingUp } from 'lucide-react';
 import { Button } from './ui/Button';
-import useInvestments from '../hooks/useInvestments';
-import useAuth from '../hooks/useAuth';
-import type { Investment } from '../types';
+import { Input } from './ui/Input';
+import type { Investment, InvestmentType } from '../types';
+import type { AddInvestmentInput, UpdateInvestmentInput } from '../hooks/useInvestments';
 
 interface AddInvestmentModalProps {
   onClose: () => void;
+  onAdd: (input: AddInvestmentInput) => Promise<void>;
+  onUpdate?: (id: string, input: UpdateInvestmentInput) => Promise<void>;
+  editingInvestment?: Investment | null;
 }
 
-const investmentTypes: Array<{ value: Investment['type']; label: string }> = [
-  { value: 'stocks', label: 'Ações' },
-  { value: 'crypto', label: 'Criptomoedas' },
-  { value: 'funds', label: 'Fundos de Investimento' },
-  { value: 'savings', label: 'Poupança/CDB' },
+export const INVESTMENT_CLASSES: Array<{
+  value: InvestmentType;
+  label: string;
+  shortLabel: string;
+  color: string;
+}> = [
+  { value: 'fixed_income', label: 'Renda Fixa (Tesouro / CDB / LCI)', shortLabel: 'Renda Fixa', color: '#2563EB' },
+  { value: 'stocks', label: 'Ações & ETFs', shortLabel: 'Ações', color: '#16A34A' },
+  { value: 'reits', label: 'Fundos Imobiliários (FIIs)', shortLabel: 'FIIs', color: '#0891B2' },
+  { value: 'funds', label: 'Fundos de Investimento', shortLabel: 'Fundos', color: '#7C3AED' },
+  { value: 'crypto', label: 'Criptomoedas', shortLabel: 'Cripto', color: '#D97706' },
+  { value: 'savings', label: 'Reserva / Poupança', shortLabel: 'Reserva', color: '#64748B' },
 ];
 
-export function AddInvestmentModal({ onClose }: AddInvestmentModalProps) {
-  const { user } = useAuth();
-  const { addInvestment } = useInvestments(user?.uid, user?.isPro || false);
+export function AddInvestmentModal({
+  onClose,
+  onAdd,
+  onUpdate,
+  editingInvestment = null,
+}: AddInvestmentModalProps) {
+  const isEditing = Boolean(editingInvestment);
 
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<Investment['type']>('stocks');
+  const [name, setName] = useState(editingInvestment?.name ?? '');
+  const [amount, setAmount] = useState(
+    editingInvestment ? String(editingInvestment.amount) : ''
+  );
+  const [currentValue, setCurrentValue] = useState(
+    editingInvestment ? String(editingInvestment.currentValue) : ''
+  );
+  const [type, setType] = useState<InvestmentType>(
+    editingInvestment?.type ?? 'fixed_income'
+  );
+  const [institution, setInstitution] = useState(editingInvestment?.institution ?? '');
+  const [notes, setNotes] = useState(editingInvestment?.notes ?? '');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    if (!name || !amount) {
-      alert('Preencha todos os campos');
+    setError(null);
+
+    const parsedAmount = Number(amount.replace(',', '.'));
+    const parsedCurrent =
+      currentValue.trim() === ''
+        ? parsedAmount
+        : Number(currentValue.replace(',', '.'));
+
+    if (!name.trim()) {
+      setError('Informe o nome ou ticker do ativo.');
       return;
     }
-
-    const numericAmount = parseFloat(amount.replace(',', '.'));
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      alert('Digite um valor válido');
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError('Informe um valor investido maior que zero.');
+      return;
+    }
+    if (!Number.isFinite(parsedCurrent) || parsedCurrent < 0) {
+      setError('Informe um valor atual válido.');
       return;
     }
 
     setLoading(true);
     try {
-      await addInvestment(name, numericAmount, type);
+      if (editingInvestment && onUpdate) {
+        await onUpdate(editingInvestment.id, {
+          name,
+          amount: parsedAmount,
+          currentValue: parsedCurrent,
+          type,
+          institution,
+          notes,
+        });
+      } else {
+        await onAdd({
+          name,
+          amount: parsedAmount,
+          currentValue: parsedCurrent,
+          type,
+          institution,
+          notes,
+        });
+      }
       onClose();
     } catch (err) {
-      alert('Erro ao adicionar investimento');
+      setError(
+        err instanceof Error ? err.message : 'Erro ao salvar ativo na carteira.'
+      );
     } finally {
       setLoading(false);
     }
@@ -55,61 +107,111 @@ export function AddInvestmentModal({ onClose }: AddInvestmentModalProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
-          <h3 className="modal-title">Novo Investimento</h3>
-          <button onClick={onClose} className="modal-close">
-            <X size={24} />
+          <div className="modal-title-group">
+            <TrendingUp size={20} className="text-primary" />
+            <h3 className="modal-title">
+              {isEditing ? 'Editar Ativo' : 'Novo Ativo na Carteira'}
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="modal-close"
+            aria-label="Fechar"
+          >
+            <X size={22} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            <Input
-              label="Nome do Investimento"
-              placeholder="Ex: PETR4, Bitcoin, Tesouro Selic..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+        <form onSubmit={handleSubmit} className="modal-body">
+          {error && (
+            <div className="pro-inline-error" role="alert">
+              {error}
+            </div>
+          )}
 
+          <Input
+            label="Nome ou Ticker do Ativo"
+            type="text"
+            placeholder="Ex: Tesouro Selic 2029, PETR4, HGLG11, Bitcoin..."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={100}
+            required
+          />
+
+          <div className="input-wrapper">
+            <label className="input-label">Classe do Ativo</label>
+            <select
+              className="input"
+              value={type}
+              onChange={(e) => setType(e.target.value as InvestmentType)}
+            >
+              {INVESTMENT_CLASSES.map((cls) => (
+                <option key={cls.value} value={cls.value}>
+                  {cls.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="modal-two-col">
             <Input
-              label="Valor Investido"
+              label="Valor Investido (R$)"
+              type="number"
+              step="0.01"
+              min="0.01"
               placeholder="0,00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              icon={<DollarSign size={20} />}
-              helperText="Valor total que você investiu"
               required
             />
 
-            <div className="input-group">
-              <label className="input-label">Tipo de Investimento</label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as Investment['type'])}
-                className="select-input"
-                required
-              >
-                {investmentTypes.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="investment-tip">
-              <strong>💡 Dica:</strong> Você poderá atualizar o valor atual do investimento depois para acompanhar lucros e perdas
-            </div>
+            <Input
+              label="Valor Atual (R$)"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Igual ao investido"
+              value={currentValue}
+              onChange={(e) => setCurrentValue(e.target.value)}
+            />
           </div>
 
-          <div className="modal-footer">
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <Input
+            label="Corretora ou Banco (opcional)"
+            type="text"
+            placeholder="Ex: XP, NuInvest, BTG, Rico, Binance..."
+            value={institution}
+            onChange={(e) => setInstitution(e.target.value)}
+            maxLength={80}
+          />
+
+          <div className="input-wrapper">
+            <label className="input-label">Observações (opcional)</label>
+            <textarea
+              className="input pro-textarea"
+              rows={2}
+              maxLength={240}
+              placeholder="Taxa contratada, vencimento, objetivo do ativo..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" disabled={loading}>
-              {loading ? 'Salvando...' : 'Adicionar'}
+            <Button type="submit" variant="primary" loading={loading}>
+              {isEditing ? 'Salvar alterações' : 'Adicionar ativo'}
             </Button>
           </div>
         </form>

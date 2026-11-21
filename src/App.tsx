@@ -7,7 +7,16 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import useAuth from './hooks/useAuth';
 
 function App() {
-  const { user, loading, signIn, signUp, signInWithGoogle, signOut } = useAuth();
+  const {
+    user,
+    loading,
+    signIn,
+    signUp,
+    signInWithGoogle,
+    signOut,
+    activateProPlan,
+    downgradeToFree,
+  } = useAuth();
   const [showLanding, setShowLanding] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -38,7 +47,14 @@ function App() {
             onSignOut={signOut}
             onUpgradeToPro={() => setShowUpgradeModal(true)}
           />
-          {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
+          {showUpgradeModal && (
+            <UpgradeModal
+              user={user}
+              onClose={() => setShowUpgradeModal(false)}
+              onActivatePro={activateProPlan}
+              onDowngradeToFree={downgradeToFree}
+            />
+          )}
         </>
       )}
     </ErrorBoundary>

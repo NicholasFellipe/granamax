@@ -1,6 +1,7 @@
 // 🎨 BUTTON COMPONENT - BRANDING GRANAMAX
 
-import { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,6 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   fullWidth?: boolean;
   icon?: ReactNode;
+  loading?: boolean;
 }
 
 export function Button({
@@ -17,10 +19,13 @@ export function Button({
   children,
   fullWidth = false,
   icon,
+  loading = false,
   className,
   disabled,
   ...props
 }: ButtonProps) {
+  const isDisabled = Boolean(disabled || loading);
+
   return (
     <button
       className={clsx(
@@ -28,13 +33,20 @@ export function Button({
         `btn-${variant}`,
         `btn-${size}`,
         fullWidth && 'btn-full',
-        disabled && 'btn-disabled',
+        isDisabled && 'btn-disabled',
         className
       )}
-      disabled={disabled}
+      disabled={isDisabled}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {icon && <span className="btn-icon">{icon}</span>}
+      {loading ? (
+        <span className="btn-icon" aria-hidden="true">
+          <Loader2 size={16} className="spinning" />
+        </span>
+      ) : (
+        icon && <span className="btn-icon">{icon}</span>
+      )}
       {children}
     </button>
   );
