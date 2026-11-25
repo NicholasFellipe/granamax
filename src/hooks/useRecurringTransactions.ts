@@ -15,6 +15,11 @@ import { format, getDaysInMonth } from 'date-fns';
 import { db } from '../config/firebase';
 import type { RecurringTransaction } from '../types';
 import { OperationType, handleFirestoreError } from '../utils/firestoreError';
+import {
+  FREE_EXPENSE_LIMIT,
+  FREE_INCOME_LIMIT,
+  getTransactionLimitError,
+} from '../constants/planLimits';
 
 export interface CreateRecurringInput {
   description: string;
@@ -25,9 +30,24 @@ export interface CreateRecurringInput {
   populateCurrentMonth?: boolean;
 }
 
+export interface RecurringLimitsOptions {
+  isPro?: boolean;
+  expenseCount?: number;
+  incomeCount?: number;
+  transactionsLoaded?: boolean;
+}
+
 const EMPTY_RECURRING_ITEMS: RecurringTransaction[] = [];
 
-function useRecurringTransactions(userId: string | undefined) {
+function useRecurringTransactions(
+  userId: string | undefined,
+  options?: RecurringLimitsOptions
+) {
+  const isPro = options?.isPro ?? false;
+  const expenseCount = options?.expenseCount ?? 0;
+  const incomeCount = options?.incomeCount ?? 0;
+  const transactionsLoaded = options?.transactionsLoaded ?? true;
+
   const [recurringState, setRecurringState] = useState<{
     userId: string | undefined;
     items: RecurringTransaction[];
@@ -96,11 +116,19 @@ function useRecurringTransactions(userId: string | undefined) {
   // Auto-populate due recurring transactions for the current month idempotently
   useEffect(() => {
     if (!userId || loading || recurringItems.length === 0) return;
+    if (!isPro && !transactionsLoaded) return;
 
     const now = new Date();
     const currentMonth = format(now, 'yyyy-MM');
     const todayDay = now.getDate();
     const daysInCurrentMonth = getDaysInMonth(now);
+
+    let remainingExpenses = isPro
+      ? Number.POSITIVE_INFINITY
+      : Math.max(0, FREE_EXPENSE_LIMIT - expenseCount);
+    let remainingIncomes = isPro
+      ? Number.POSITIVE_INFINITY
+      : Math.max(0, FREE_INCOME_LIMIT - incomeCount);
 
     const dueItems = recurringItems.filter((item) => {
       if (!item.active) return false;
@@ -108,7 +136,12 @@ function useRecurringTransactions(userId: string | undefined) {
       const effectiveDueDay = Math.min(item.dayOfMonth, daysInCurrentMonth);
       if (todayDay < effectiveDueDay) return false;
       const key = `${item.id}_${currentMonth}`;
-      return !processedKeysRef.current.has(key);
+      if (processedKeysRef.current.has(key)) return false;
+      if (!isPro) {
+        if (item.type === 'expense' && remainingExpenses <= 0) return false;
+        if (item.type === 'income' && remainingIncomes <= 0) return false;
+      }
+      return true;
     });
 
     if (dueItems.length === 0) return;
@@ -124,15 +157,29 @@ function useRecurringTransactions(userId: string | undefined) {
 
       for (const item of dueItems) {
         if (cancelled) break;
+        const key = `${item.id}_${currentMonth}`;
         const txId = `rec_${item.id}_${currentMonth}`;
         const txRef = doc(db, 'transactions', txId);
         const recurringRef = doc(db, 'recurringTransactions', item.id);
 
         try {
           const txSnap = await getDoc(txRef);
+          const needsCreate = !txSnap.exists();
+
+          if (needsCreate && !isPro) {
+            if (item.type === 'expense' && remainingExpenses <= 0) {
+              processedKeysRef.current.delete(key);
+              continue;
+            }
+            if (item.type === 'income' && remainingIncomes <= 0) {
+              processedKeysRef.current.delete(key);
+              continue;
+            }
+          }
+
           const batch = writeBatch(db);
 
-          if (!txSnap.exists()) {
+          if (needsCreate) {
             batch.set(txRef, {
               userId,
               description: item.description.trim().slice(0, 120),
@@ -143,6 +190,10 @@ function useRecurringTransactions(userId: string | undefined) {
               createdAt: serverTimestamp(),
             });
             createdDescriptions.push(item.description);
+            if (!isPro) {
+              if (item.type === 'expense') remainingExpenses -= 1;
+              else remainingIncomes -= 1;
+            }
           }
 
           batch.update(recurringRef, {
@@ -152,7 +203,7 @@ function useRecurringTransactions(userId: string | undefined) {
 
           await batch.commit();
         } catch (err) {
-          processedKeysRef.current.delete(`${item.id}_${currentMonth}`);
+          processedKeysRef.current.delete(key);
           handleFirestoreError(err, OperationType.WRITE, `recurringTransactions/${item.id}`);
         }
       }
@@ -175,7 +226,7 @@ function useRecurringTransactions(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [userId, loading, recurringItems]);
+  }, [userId, loading, recurringItems, isPro, expenseCount, incomeCount, transactionsLoaded]);
 
   const addRecurringTransaction = useCallback(
     async (input: CreateRecurringInput) => {
@@ -199,8 +250,21 @@ function useRecurringTransactions(userId: string | undefined) {
       const currentMonth = format(now, 'yyyy-MM');
       const todayDay = now.getDate();
       const daysInCurrentMonth = getDaysInMonth(now);
-      const shouldPopulate =
+      let shouldPopulate =
         input.populateCurrentMonth ?? todayDay >= Math.min(safeDay, daysInCurrentMonth);
+
+      if (shouldPopulate && !isPro) {
+        const limitReached =
+          input.type === 'expense'
+            ? expenseCount >= FREE_EXPENSE_LIMIT
+            : incomeCount >= FREE_INCOME_LIMIT;
+        if (limitReached) {
+          if (input.populateCurrentMonth) {
+            throw new Error(getTransactionLimitError(input.type));
+          }
+          shouldPopulate = false;
+        }
+      }
 
       const recurringRef = doc(collection(db, 'recurringTransactions'));
       const batch = writeBatch(db);
@@ -239,7 +303,7 @@ function useRecurringTransactions(userId: string | undefined) {
         handleFirestoreError(err, OperationType.CREATE, 'recurringTransactions');
       }
     },
-    [userId]
+    [userId, isPro, expenseCount, incomeCount]
   );
 
   const triggerRecurringForMonth = useCallback(
@@ -255,6 +319,18 @@ function useRecurringTransactions(userId: string | undefined) {
 
       try {
         const txSnap = await getDoc(txRef);
+
+        if (!txSnap.exists() && !isPro) {
+          const limitReached =
+            item.type === 'expense'
+              ? expenseCount >= FREE_EXPENSE_LIMIT
+              : incomeCount >= FREE_INCOME_LIMIT;
+          if (limitReached) {
+            processedKeysRef.current.delete(`${item.id}_${month}`);
+            throw new Error(getTransactionLimitError(item.type));
+          }
+        }
+
         const batch = writeBatch(db);
 
         if (!txSnap.exists()) {
@@ -277,10 +353,13 @@ function useRecurringTransactions(userId: string | undefined) {
         await batch.commit();
       } catch (err) {
         processedKeysRef.current.delete(`${item.id}_${month}`);
+        if (err instanceof Error && err.message.startsWith('Limite do plano Grátis')) {
+          throw err;
+        }
         handleFirestoreError(err, OperationType.WRITE, `recurringTransactions/${item.id}`);
       }
     },
-    [userId]
+    [userId, isPro, expenseCount, incomeCount]
   );
 
   const toggleRecurringActive = useCallback(async (id: string, active: boolean) => {

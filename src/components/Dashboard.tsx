@@ -47,6 +47,7 @@ import useWealthHistory from '../hooks/useWealthHistory';
 import useCustomAlerts from '../hooks/useCustomAlerts';
 import useSupportTickets from '../hooks/useSupportTickets';
 import type { User } from '../types';
+import { FREE_EXPENSE_LIMIT, FREE_INCOME_LIMIT } from '../constants/planLimits';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -99,7 +100,9 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
     addTransaction,
     updateTransactionCategory,
     deleteTransaction,
-  } = useTransactions(user.uid);
+    expenseCount,
+    incomeCount,
+  } = useTransactions(user.uid, user.isPro);
   const { insights, alerts, dailyBudget, achievements } = useRetention(user.uid);
   const {
     loading: monthlyBudgetLoading,
@@ -116,7 +119,20 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
     toggleRecurringActive,
     deleteRecurringTransaction,
     dismissAutoPopulatedBanner,
-  } = useRecurringTransactions(user.uid);
+  } = useRecurringTransactions(user.uid, {
+    isPro: user.isPro,
+    expenseCount,
+    incomeCount,
+    transactionsLoaded: !txLoading,
+  });
+
+  const handleOpenVoiceModal = () => {
+    if (!user.isPro) {
+      onUpgradeToPro();
+      return;
+    }
+    setShowVoiceTransaction(true);
+  };
 
   const {
     investments,
@@ -463,7 +479,13 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
 
           {activeTab === 'overview' && (
             <>
-              {!user.isPro && <FreePromoBanner onUpgrade={onUpgradeToPro} />}
+              {!user.isPro && (
+                <FreePromoBanner
+                  onUpgrade={onUpgradeToPro}
+                  expenseCount={expenseCount}
+                  incomeCount={incomeCount}
+                />
+              )}
 
               <AlertsPanel alerts={combinedAlerts} />
 
@@ -555,10 +577,22 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => setShowVoiceTransaction(true)}
+                        onClick={handleOpenVoiceModal}
                         icon={<Mic size={16} />}
+                        title={
+                          user.isPro
+                            ? 'Adicionar transação por voz'
+                            : 'Lançamento por voz é exclusivo do GranaMax PRO'
+                        }
                       >
-                        Por Voz
+                        <span className="voice-btn-pro-content">
+                          Por Voz
+                          {!user.isPro && (
+                            <Badge variant="pro" size="sm">
+                              PRO
+                            </Badge>
+                          )}
+                        </span>
                       </Button>
                       <Button
                         variant="primary"
@@ -593,10 +627,22 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                   <div className="dashboard-card-actions">
                     <Button
                       variant="secondary"
-                      onClick={() => setShowVoiceTransaction(true)}
+                      onClick={handleOpenVoiceModal}
                       icon={<Mic size={16} />}
+                      title={
+                        user.isPro
+                          ? 'Adicionar transação por voz'
+                          : 'Lançamento por voz é exclusivo do GranaMax PRO'
+                      }
                     >
-                      Adicionar por Voz
+                      <span className="voice-btn-pro-content">
+                        Adicionar por Voz
+                        {!user.isPro && (
+                          <Badge variant="pro" size="sm">
+                            PRO
+                          </Badge>
+                        )}
+                      </span>
                     </Button>
                     <Button
                       variant="primary"
@@ -608,6 +654,74 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
                   </div>
                 }
               />
+              {!user.isPro && (
+                <div className="tx-tab-quota-bar" aria-label="Limites do plano Grátis">
+                  <div className="tx-tab-quota-meters">
+                    <div className="free-quota-item">
+                      <div
+                        className={`free-quota-meta ${
+                          expenseCount >= FREE_EXPENSE_LIMIT ? 'free-quota-meta-full' : ''
+                        }`}
+                      >
+                        <span>Despesas (Grátis)</span>
+                        <span>
+                          {expenseCount}/{FREE_EXPENSE_LIMIT}
+                        </span>
+                      </div>
+                      <div className="free-quota-track">
+                        <div
+                          className={`free-quota-fill ${
+                            expenseCount >= FREE_EXPENSE_LIMIT
+                              ? 'free-quota-fill-full'
+                              : expenseCount / FREE_EXPENSE_LIMIT >= 0.8
+                                ? 'free-quota-fill-warn'
+                                : ''
+                          }`}
+                          style={{
+                            width: `${Math.min(100, Math.round((expenseCount / FREE_EXPENSE_LIMIT) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="free-quota-item">
+                      <div
+                        className={`free-quota-meta ${
+                          incomeCount >= FREE_INCOME_LIMIT ? 'free-quota-meta-full' : ''
+                        }`}
+                      >
+                        <span>Receitas (Grátis)</span>
+                        <span>
+                          {incomeCount}/{FREE_INCOME_LIMIT}
+                        </span>
+                      </div>
+                      <div className="free-quota-track">
+                        <div
+                          className={`free-quota-fill ${
+                            incomeCount >= FREE_INCOME_LIMIT
+                              ? 'free-quota-fill-full'
+                              : incomeCount / FREE_INCOME_LIMIT >= 0.8
+                                ? 'free-quota-fill-warn'
+                                : ''
+                          }`}
+                          style={{
+                            width: `${Math.min(100, Math.round((incomeCount / FREE_INCOME_LIMIT) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="tx-tab-quota-upgrade"
+                    onClick={onUpgradeToPro}
+                  >
+                    <Crown size={14} />
+                    <span>Liberar ilimitado + Voz PRO</span>
+                  </button>
+                </div>
+              )}
               <CardContent className="p-0">
                 <TransactionList
                   transactions={filteredTransactions}
@@ -624,10 +738,12 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
             <RecurringTransactionsPanel
               items={recurringItems}
               loading={recurringLoading}
+              isPro={user.isPro}
               onAdd={addRecurringTransaction}
               onToggleActive={toggleRecurringActive}
               onTriggerNow={triggerRecurringForMonth}
               onDelete={deleteRecurringTransaction}
+              onUpgradeToPro={onUpgradeToPro}
             />
           )}
 
@@ -792,10 +908,17 @@ export function Dashboard({ user, onSignOut, onUpgradeToPro }: DashboardProps) {
         <AddTransactionModal
           onClose={() => setShowAddTransaction(false)}
           onAdd={addTransaction}
+          isPro={user.isPro}
+          expenseCount={expenseCount}
+          incomeCount={incomeCount}
+          onUpgradeToPro={() => {
+            setShowAddTransaction(false);
+            onUpgradeToPro();
+          }}
         />
       )}
 
-      {showVoiceTransaction && (
+      {showVoiceTransaction && user.isPro && (
         <VoiceTransactionModal
           onClose={() => setShowVoiceTransaction(false)}
           onAdd={addTransaction}

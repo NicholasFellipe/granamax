@@ -13,8 +13,13 @@ import {
 import { db } from '../config/firebase';
 import type { Transaction } from '../types';
 import { OperationType, handleFirestoreError } from '../utils/firestoreError';
+import {
+  FREE_EXPENSE_LIMIT,
+  FREE_INCOME_LIMIT,
+  getTransactionLimitError,
+} from '../constants/planLimits';
 
-function useTransactions(userId: string | undefined) {
+function useTransactions(userId: string | undefined, isPro = false) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +65,11 @@ function useTransactions(userId: string | undefined) {
     return () => unsubscribe();
   }, [userId]);
 
+  const expenseCount = transactions.filter((t) => t.type === 'expense').length;
+  const incomeCount = transactions.filter((t) => t.type === 'income').length;
+  const canAddExpense = isPro || expenseCount < FREE_EXPENSE_LIMIT;
+  const canAddIncome = isPro || incomeCount < FREE_INCOME_LIMIT;
+
   const addTransaction = async (
     description: string,
     amount: number,
@@ -67,6 +77,15 @@ function useTransactions(userId: string | undefined) {
     category: string
   ) => {
     if (!userId) throw new Error('Usuário não autenticado');
+
+    if (!isPro) {
+      if (type === 'expense' && expenseCount >= FREE_EXPENSE_LIMIT) {
+        throw new Error(getTransactionLimitError('expense'));
+      }
+      if (type === 'income' && incomeCount >= FREE_INCOME_LIMIT) {
+        throw new Error(getTransactionLimitError('income'));
+      }
+    }
 
     const safeDescription = description.trim().slice(0, 120);
     const safeCategory = category.trim().slice(0, 40) || 'Outros';
@@ -138,6 +157,10 @@ function useTransactions(userId: string | undefined) {
     balance,
     totalIncome,
     totalExpenses,
+    expenseCount,
+    incomeCount,
+    canAddExpense,
+    canAddIncome,
   };
 }
 

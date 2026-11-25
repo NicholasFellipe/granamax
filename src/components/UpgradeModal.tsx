@@ -25,8 +25,9 @@ const COMPARISON_ROWS: Array<{
   free: string | boolean;
   pro: string | boolean;
 }> = [
-  { feature: 'Controle de receitas, despesas e orçamento', free: true, pro: true },
-  { feature: 'Transações recorrentes e entrada por voz', free: true, pro: true },
+  { feature: 'Registro de despesas e receitas', free: '50 despesas / 10 receitas', pro: 'Ilimitados' },
+  { feature: 'Orçamento diário, mensal e recorrências', free: true, pro: true },
+  { feature: 'Lançamento por voz com IA', free: false, pro: true },
   { feature: 'Simulador de investimentos avançado (IPCA + IR + cenários)', free: false, pro: true },
   { feature: 'Controle completo de carteira (6 classes de ativos)', free: false, pro: true },
   { feature: 'Análises detalhadas por categoria (comparativo mensal)', free: false, pro: true },

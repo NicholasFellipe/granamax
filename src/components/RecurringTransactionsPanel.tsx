@@ -10,6 +10,7 @@ import {
   Trash2,
   CheckCircle2,
   DollarSign,
+  Crown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,10 +24,12 @@ import type { CreateRecurringInput } from '../hooks/useRecurringTransactions';
 interface RecurringTransactionsPanelProps {
   items: RecurringTransaction[];
   loading: boolean;
+  isPro?: boolean;
   onAdd: (input: CreateRecurringInput) => Promise<void>;
   onToggleActive: (id: string, active: boolean) => Promise<void>;
   onTriggerNow: (item: RecurringTransaction, month?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onUpgradeToPro?: () => void;
 }
 
 const EXPENSE_PRESETS = [
@@ -61,10 +64,12 @@ function parseCurrencyInput(raw: string): number {
 export function RecurringTransactionsPanel({
   items,
   loading,
+  isPro = false,
   onAdd,
   onToggleActive,
   onTriggerNow,
   onDelete,
+  onUpgradeToPro,
 }: RecurringTransactionsPanelProps) {
   const now = new Date();
   const currentMonth = format(now, 'yyyy-MM');
@@ -82,6 +87,7 @@ export function RecurringTransactionsPanel({
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
 
   const presets = type === 'income' ? INCOME_PRESETS : EXPENSE_PRESETS;
 
@@ -150,8 +156,11 @@ export function RecurringTransactionsPanel({
 
   const handleAction = async (id: string, action: () => Promise<void>) => {
     setBusyId(id);
+    setActionError('');
     try {
       await action();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Não foi possível concluir a ação.');
     } finally {
       setBusyId(null);
     }
@@ -332,6 +341,22 @@ export function RecurringTransactionsPanel({
             subtitle="Ao abrir o painel no dia previsto de cada mês, as pendências ativas entram automaticamente"
           />
           <CardContent className="p-0">
+            {actionError && (
+              <div className="pro-inline-error pro-inline-error-inset recurring-error-upsell" role="alert">
+                <span>{actionError}</span>
+                {!isPro && onUpgradeToPro && (
+                  <Button
+                    type="button"
+                    variant="pro"
+                    size="sm"
+                    onClick={onUpgradeToPro}
+                    icon={<Crown size={14} />}
+                  >
+                    Ativar PRO
+                  </Button>
+                )}
+              </div>
+            )}
             {loading ? (
               <div className="spinner-container">
                 <div className="spinner" />

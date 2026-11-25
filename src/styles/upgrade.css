@@ -1080,6 +1080,175 @@
   }
 }
 
+/* FREE PLAN TRANSACTION QUOTA & VOICE PRO BADGE */
+.free-quota-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.free-quota-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 155px;
+  font-variant-numeric: tabular-nums;
+}
+
+.free-quota-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #78350F;
+}
+
+.free-quota-meta-full {
+  color: #B91C1C;
+}
+
+.free-quota-track {
+  height: 5px;
+  background: rgba(180, 83, 9, 0.16);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.free-quota-fill {
+  height: 100%;
+  background: #16A34A;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.free-quota-fill-warn {
+  background: #D97706;
+}
+
+.free-quota-fill-full {
+  background: #DC2626;
+}
+
+.tx-tab-quota-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1.25rem;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+  font-variant-numeric: tabular-nums;
+}
+
+.tx-tab-quota-meters {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tx-tab-quota-meters .free-quota-meta {
+  color: #374151;
+}
+
+.tx-tab-quota-meters .free-quota-meta-full {
+  color: #B91C1C;
+}
+
+.tx-tab-quota-meters .free-quota-track {
+  background: #E5E7EB;
+}
+
+.tx-tab-quota-upgrade {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tx-tab-quota-upgrade:hover {
+  background: #FEF3C7;
+}
+
+.modal-quota-box {
+  padding: 0.65rem 0.85rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.modal-quota-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #4B5563;
+}
+
+.modal-quota-row strong {
+  color: #111827;
+}
+
+.modal-quota-row-full strong {
+  color: #B91C1C;
+}
+
+.modal-limit-upsell {
+  padding: 0.9rem 1rem;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.modal-limit-upsell-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.84rem;
+  color: #78350F;
+  line-height: 1.45;
+}
+
+.modal-limit-upsell-copy svg {
+  color: #D97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.voice-btn-pro-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.recurring-error-upsell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .plan-selector-grid {

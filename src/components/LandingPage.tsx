@@ -21,7 +21,7 @@ const faqs = [
   {
     question: 'Como funciona o GranaMax PRO?',
     answer:
-      'O plano PRO reúne recursos avançados para quem quer acompanhar investimentos e análises detalhadas por R$ 9,90 por mês. Enquanto finalizamos a assinatura oficial nas lojas, você já pode usar toda a base gratuita normalmente.',
+      'No plano Grátis você registra até 50 despesas e 10 receitas com orçamento diário e gráficos. O GranaMax PRO (R$ 9,90/mês ou R$ 89,90/ano) libera lançamentos ilimitados, comando por voz com IA, simulador avançado, carteira completa, previsões inteligentes, alertas ilimitados, suporte prioritário e experiência sem anúncios.',
   },
 ];
 
@@ -211,7 +211,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               <ul className="plan-features">
                 <li>
                   <Check size={18} className="plan-check" aria-hidden="true" />
-                  <span>Registro ilimitado de receitas e despesas</span>
+                  <span>Até 50 despesas e 10 receitas cadastradas</span>
                 </li>
                 <li>
                   <Check size={18} className="plan-check" aria-hidden="true" />
@@ -223,7 +223,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 </li>
                 <li>
                   <Check size={18} className="plan-check" aria-hidden="true" />
-                  <span>Alertas gentis de consumo e conquistas</span>
+                  <span>Até 2 alertas personalizados e conquistas</span>
                 </li>
               </ul>
 
@@ -238,35 +238,35 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
             <div className="plan-card plan-card-featured">
               <div className="plan-header">
-                <p className="plan-meta">Opcional · Em breve</p>
+                <p className="plan-meta">Completo · Sem anúncios</p>
                 <h3 className="plan-name">GranaMax PRO</h3>
                 <p className="plan-desc">
-                  Para quem já organizou o mês e quer simular investimentos e
-                  acompanhar a evolução do patrimônio.
+                  Para quem quer lançamentos ilimitados, comandos por voz com IA,
+                  carteira de investimentos e previsões inteligentes.
                 </p>
               </div>
 
               <div className="plan-price">
                 <span className="plan-amount">R$ 9,90</span>
-                <span className="plan-period">/mês · menos de R$ 0,33/dia</span>
+                <span className="plan-period">/mês · ou R$ 89,90/ano</span>
               </div>
 
               <ul className="plan-features">
                 <li>
                   <Check size={18} className="plan-check" aria-hidden="true" />
-                  <span>Tudo do plano gratuito incluso</span>
+                  <span>Despesas e receitas ilimitadas + lançamento por voz com IA</span>
                 </li>
                 <li>
                   <Check size={18} className="plan-check" aria-hidden="true" />
-                  <span>Simulador interativo de investimentos</span>
+                  <span>Simulador avançado de investimentos e carteira completa</span>
                 </li>
                 <li>
                   <Check size={18} className="plan-check" aria-hidden="true" />
-                  <span>Controle completo de carteira e lucros</span>
+                  <span>Previsões inteligentes de gastos e evolução patrimonial</span>
                 </li>
                 <li>
                   <Check size={18} className="plan-check" aria-hidden="true" />
-                  <span>Análises avançadas e projeção mensal</span>
+                  <span>Alertas ilimitados, suporte prioritário e sem anúncios</span>
                 </li>
               </ul>
 
@@ -368,11 +368,12 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       {showProModal && (
         <div className="modal-overlay" onClick={() => setShowProModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>GranaMax PRO em breve</h3>
+            <h3>Conheça o GranaMax PRO</h3>
             <p>
-              Estamos preparando a integração de assinatura. Enquanto isso, você já
-              pode criar sua conta gratuita e organizar todas as suas finanças sem
-              custo.
+              Crie sua conta gratuitamente para começar com até 50 despesas e 10
+              receitas. Dentro do painel você pode ativar o GranaMax PRO a qualquer
+              momento para liberar registros ilimitados, lançamento por voz com IA,
+              carteira completa, previsões inteligentes e suporte prioritário.
             </p>
             <div className="modal-actions">
               <button
@@ -383,7 +384,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 }}
                 className="btn-primary"
               >
-                Começar grátis agora
+                Entrar e experimentar agora
               </button>
               <button
                 type="button"
